@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#8f0a21" />
+  <meta name="description" content="通州区党建志愿服务地图 H5 交互原型" />
+  <title>通州区党建志愿服务地图</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="preconnect" href="https://unpkg.com" />
+  <link rel="preconnect" href="https://picsum.photos" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { party: '#c8102e', partyDeep: '#8f0a21', gold: '#ffd96a', cream: '#f8f4ec' },
+          fontFamily: { sans: ['"Noto Sans SC"', '"Microsoft YaHei"', 'system-ui', 'sans-serif'] }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      --party-red: #c8102e;
+      --party-deep: #8f0a21;
+      --party-dark: #5d0716;
+      --gold: #ffd96a;
+      --cream: #f8f4ec;
+      --paper: #fffdf9;
+      --ink: #302524;
+      --muted: #7c6c68;
+      --shadow: 0 18px 55px rgba(81, 37, 29, 0.13);
+      --shadow-soft: 0 8px 24px rgba(81, 37, 29, 0.09);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; margin: 0; }
+    body {
+      overflow-x: hidden;
+      color: var(--ink);
+      font-family: "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 7% 10%, rgba(255, 214, 106, 0.16), transparent 22rem),
+        radial-gradient(circle at 94% 34%, rgba(200, 16, 46, 0.08), transparent 26rem),
+        var(--cream);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    [v-cloak] { display: none !important; }
+    button { font: inherit; -webkit-tap-highlight-color: transparent; }
+    button:focus-visible { outline: 3px solid rgba(255, 215, 0, 0.92); outline-offset: 3px; }
+
+    .hero-bar {
+      position: relative;
+      overflow: hidden;
+      padding: calc(16px + env(safe-area-inset-top)) 18px 17px;
+      color: #fff;
+      background:
+        radial-gradient(circle at 87% 4%, rgba(255, 219, 106, 0.28), transparent 22rem),
+        linear-gradient(125deg, #5d0716 0%, #910b24 42%, #c8102e 100%);
+      box-shadow: 0 12px 36px rgba(77, 8, 22, 0.2);
+    }
+    .hero-bar::before {
+      content: "";
+      position: absolute;
+      right: -5rem;
+      top: -9rem;
+      width: 29rem;
+      height: 29rem;
+      border: 1px solid rgba(255, 218, 112, 0.18);
+      border-radius: 50%;
+      box-shadow: 0 0 0 34px rgba(255, 218, 112, 0.035), 0 0 0 84px rgba(255, 218, 112, 0.025);
+      pointer-events: none;
+    }
+    .hero-bar::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, rgba(255, 216, 104, 0.95) 30%, rgba(255, 216, 104, 0.35) 68%, transparent);
+    }
+    .hero-inner { position: relative; z-index: 1; width: 100%; }
+    .brand-emblem {
+      position: relative;
+      display: grid;
+      flex: 0 0 auto;
+      width: 56px;
+      height: 56px;
+      place-items: center;
+      color: var(--party-deep);
+      background: linear-gradient(145deg, #fff9d9, #ffd968 68%, #edb93c);
+      border: 2px solid rgba(255, 255, 255, 0.86);
+      border-radius: 18px 18px 18px 6px;
+      box-shadow: 0 9px 20px rgba(49, 0, 8, 0.3);
+      transform: rotate(-2deg);
+    }
+    .brand-emblem > i { font-size: 24px; transform: rotate(2deg); }
+    .brand-star {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      display: grid;
+      width: 21px;
+      height: 21px;
+      place-items: center;
+      color: var(--gold);
+      background: var(--party-deep);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      border-radius: 50%;
+      font-size: 9px;
+      box-shadow: 0 3px 9px rgba(49, 0, 8, 0.32);
+    }
+    .eyebrow-line::before { content: ""; width: 18px; height: 1px; background: currentColor; opacity: 0.75; }
+    .hero-title {
+      margin: 0;
+      overflow: hidden;
+      color: #fff;
+      font-size: clamp(19px, 3vw, 28px);
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      line-height: 1.2;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      text-shadow: 0 2px 12px rgba(46, 0, 8, 0.25);
+    }
+    .mode-switch {
+      display: flex;
+      flex: 0 0 auto;
+      min-width: 0;
+      max-width: 100%;
+      gap: 4px;
+      padding: 4px;
+      overflow: hidden;
+      background: rgba(65, 0, 11, 0.28);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 16px;
+      backdrop-filter: blur(12px);
+    }
+    .mode-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+      gap: 8px;
+      padding: 11px 15px;
+      color: rgba(255, 246, 222, 0.72);
+      background: transparent;
+      border: 0;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 800;
+      transition: color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+    }
+    .mode-button i { color: var(--gold); font-size: 13px; }
+    .mode-button span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mode-button:hover { color: #fff; background: rgba(255, 255, 255, 0.08); }
+    .mode-button.is-active { color: var(--party-deep); background: #fff8e9; box-shadow: 0 5px 14px rgba(52, 0, 9, 0.2); }
+    .mode-button.is-active i { color: var(--party-red); }
+
+    .panel-card {
+      background: rgba(255, 253, 249, 0.94);
+      border: 1px solid rgba(255, 255, 255, 0.95);
+      border-radius: 23px;
+      box-shadow: var(--shadow);
+    }
+    .view-panel { animation: viewIn 360ms ease both; }
+    @keyframes viewIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .chart-shell {
+      position: relative;
+      height: clamp(360px, 50vh, 520px);
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 20% 22%, rgba(255, 222, 126, 0.26), transparent 12rem),
+        linear-gradient(145deg, #fbf5e9, #f3e7d8);
+      border: 1px solid rgba(137, 81, 63, 0.08);
+      border-radius: 17px;
+    }
+    .chart-shell::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.22;
+      background-image: linear-gradient(rgba(161, 109, 78, 0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(161, 109, 78, 0.14) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: linear-gradient(135deg, rgba(0, 0, 0, 0.65), transparent 72%);
+    }
+    .district-chart { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .chart-note {
+      position: absolute;
+      z-index: 2;
+      bottom: 13px;
+      left: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 10px;
+      color: #73514a;
+      background: rgba(255, 253, 247, 0.86);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      border-radius: 999px;
+      box-shadow: 0 6px 18px rgba(83, 46, 34, 0.08);
+      backdrop-filter: blur(10px);
+      font-size: 10px;
+      font-weight: 800;
+    }
+    .chart-note i { color: var(--party-red); }
+
+    .district-tile {
+      position: relative;
+      display: flex;
+      min-width: 0;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 11px 12px 12px;
+      color: var(--ink);
+      text-align: left;
+      background: #fffaf1;
+      border: 1px solid rgba(139, 93, 72, 0.12);
+      border-radius: 13px;
+      cursor: pointer;
+      transition: transform 160ms ease, color 160ms ease, background 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+    }
+    .district-tile:hover { transform: translateY(-2px); border-color: rgba(200, 16, 46, 0.26); box-shadow: 0 7px 15px rgba(112, 43, 32, 0.1); }
+    .district-tile.is-active { color: #fff; background: linear-gradient(140deg, var(--party-deep), var(--party-red)); border-color: transparent; box-shadow: 0 8px 17px rgba(143, 10, 33, 0.24); }
+    .district-tile.is-active .district-tile-name, .district-tile.is-active .district-tile-meta { color: #fff; }
+    .district-tile.is-active .district-tile-icon { color: var(--gold); background: rgba(255, 255, 255, 0.13); }
+
+    .static-map-shell {
+      position: relative;
+      height: clamp(420px, calc(100dvh - 290px), 720px);
+      overflow: hidden;
+      background: #d9c9b8;
+      border: 1px solid rgba(255, 255, 255, 0.95);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      isolation: isolate;
+    }
+    .panzoom-viewport { position: absolute; inset: 0; overflow: hidden; touch-action: none; cursor: grab; background: #d9c9b8; }
+    .panzoom-viewport:active { cursor: grabbing; }
+    .panzoom-canvas { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; transform-origin: 0 0; touch-action: none; user-select: none; background: #d9c9b8; }
+    .panzoom-canvas::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0.18; background-image: linear-gradient(rgba(87, 51, 36, 0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(87, 51, 36, 0.16) 1px, transparent 1px); background-size: 58px 58px; mix-blend-mode: multiply; }
+    .map-image { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; pointer-events: none; user-select: none; -webkit-user-drag: none; filter: saturate(0.52) sepia(0.22) contrast(0.93) brightness(1.07); }
+    .map-image.is-hidden { visibility: hidden; }
+    .map-wash { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(102, 17, 25, 0.04), transparent 25%, transparent 70%, rgba(72, 37, 24, 0.2)), radial-gradient(circle at 50% 44%, transparent 28%, rgba(102, 60, 39, 0.16)); mix-blend-mode: multiply; }
+    .map-fallback-art { position: absolute; inset: 8% 12%; width: 76%; height: 84%; opacity: 0.7; pointer-events: none; }
+
+    .map-marker { position: absolute; z-index: 5; display: flex; min-width: 54px; flex-direction: column; align-items: center; padding: 0; color: var(--party-red); background: transparent; border: 0; cursor: pointer; filter: drop-shadow(0 9px 11px rgba(74, 9, 19, 0.26)); transform-origin: 50% 100%; }
+    .marker-pulse { position: absolute; bottom: 1px; left: 50%; width: 41px; height: 16px; background: rgba(200, 16, 46, 0.22); border: 1px solid rgba(200, 16, 46, 0.25); border-radius: 50%; transform: translateX(-50%); animation: markerPulse 2.1s ease-out infinite; }
+    .marker-pulse.second { animation-delay: 1.05s; }
+    .marker-pin { position: relative; display: grid; width: 44px; height: 44px; place-items: center; color: #fff; background: linear-gradient(150deg, #e32445 0%, var(--party-red) 54%, #a60b22 100%); border: 3px solid #fff; border-radius: 50% 50% 50% 9px; box-shadow: 0 8px 16px rgba(92, 7, 22, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.35); transform: rotate(-45deg); transition: transform 180ms ease, box-shadow 180ms ease; }
+    .marker-pin i { font-size: 16px; transform: rotate(45deg); }
+    .map-marker:hover .marker-pin, .map-marker.is-active .marker-pin { transform: rotate(-45deg) scale(1.12); box-shadow: 0 10px 20px rgba(92, 7, 22, 0.4), 0 0 0 4px rgba(255, 216, 102, 0.4); }
+    .marker-label { position: absolute; top: calc(100% + 4px); left: 50%; max-width: 150px; padding: 5px 8px; color: #6a2827; background: rgba(255, 253, 247, 0.92); border: 1px solid rgba(255, 255, 255, 0.94); border-radius: 6px; box-shadow: 0 5px 12px rgba(78, 30, 21, 0.13); font-size: 10px; font-weight: 900; line-height: 1.25; white-space: nowrap; transform: translateX(-50%); }
+    .map-float-chip { position: absolute; z-index: 8; display: inline-flex; align-items: center; gap: 7px; padding: 8px 11px; color: #5b4039; background: rgba(255, 252, 244, 0.9); border: 1px solid rgba(255, 255, 255, 0.92); border-radius: 999px; box-shadow: 0 7px 20px rgba(73, 42, 29, 0.13); backdrop-filter: blur(10px); font-size: 10px; font-weight: 800; }
+    .map-float-chip i { color: var(--party-red); }
+    .zoom-controls { position: absolute; z-index: 9; right: 16px; bottom: 16px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 5px; background: rgba(255, 253, 247, 0.92); border: 1px solid rgba(255, 255, 255, 0.96); border-radius: 14px; box-shadow: 0 9px 26px rgba(68, 31, 20, 0.18); backdrop-filter: blur(12px); }
+    .zoom-button { display: grid; width: 31px; height: 31px; place-items: center; color: var(--party-deep); background: #f9eee6; border: 0; border-radius: 9px; cursor: pointer; font-size: 12px; }
+    .zoom-button:hover:not(:disabled) { color: #fff; background: var(--party-red); }
+    .zoom-button:disabled { opacity: 0.35; cursor: not-allowed; }
+    .zoom-level { color: var(--muted); font-size: 9px; font-weight: 900; line-height: 1; }
+    .zoom-divider { width: 21px; height: 1px; margin: 2px 0; background: rgba(155, 100, 70, 0.17); }
+
+    .overlay-backdrop { position: fixed; inset: 0; z-index: 100; display: flex; background: rgba(45, 15, 16, 0.44); backdrop-filter: blur(5px); }
+    .district-backdrop { justify-content: flex-end; align-items: stretch; padding: 14px; }
+    .district-drawer { display: flex; width: min(510px, 100%); min-height: 100%; flex-direction: column; overflow: hidden; background: var(--paper); border: 1px solid rgba(255, 255, 255, 0.8); border-radius: 25px; box-shadow: 0 24px 80px rgba(34, 7, 11, 0.3); }
+    .drawer-hero { position: relative; flex: 0 0 auto; overflow: hidden; padding: 20px 20px 18px; color: #fff; background: linear-gradient(135deg, #650616, #a90d27 60%, #ce1734); }
+    .drawer-hero::after { content: ""; position: absolute; right: -45px; top: -65px; width: 190px; height: 190px; border: 1px solid rgba(255, 216, 105, 0.24); border-radius: 50%; box-shadow: 0 0 0 23px rgba(255, 216, 105, 0.045), 0 0 0 50px rgba(255, 216, 105, 0.025); }
+    .drawer-scroll { flex: 1 1 auto; overflow: auto; overscroll-behavior: contain; }
+    .drawer-scroll::-webkit-scrollbar, .team-modal::-webkit-scrollbar { width: 5px; }
+    .drawer-scroll::-webkit-scrollbar-thumb, .team-modal::-webkit-scrollbar-thumb { background: rgba(169, 107, 87, 0.27); border-radius: 99px; }
+    .team-card { display: flex; width: 100%; align-items: stretch; gap: 12px; padding: 9px; color: var(--ink); text-align: left; background: #fffdf9; border: 1px solid rgba(139, 93, 72, 0.13); border-radius: 16px; box-shadow: 0 4px 14px rgba(90, 43, 31, 0.05); cursor: pointer; transition: transform 170ms ease, border-color 170ms ease, box-shadow 170ms ease; }
+    .team-card:hover { transform: translateY(-2px); border-color: rgba(200, 16, 46, 0.28); box-shadow: 0 10px 22px rgba(104, 43, 32, 0.1); }
+    .team-thumb { position: relative; flex: 0 0 108px; height: 91px; overflow: hidden; background: linear-gradient(145deg, #e5a58b, #8f1831); border-radius: 11px; }
+    .team-thumb::after { content: "志愿"; position: absolute; right: 6px; bottom: 6px; padding: 3px 5px; color: #fff; background: rgba(113, 5, 21, 0.72); border: 1px solid rgba(255, 255, 255, 0.32); border-radius: 5px; font-size: 8px; font-weight: 900; }
+    .team-thumb img, .modal-image img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+    .modal-backdrop { align-items: center; justify-content: center; padding: 16px; }
+    .team-modal { position: relative; width: min(720px, 100%); max-height: min(92dvh, 810px); overflow: auto; background: var(--paper); border: 1px solid rgba(255, 255, 255, 0.92); border-radius: 26px; box-shadow: 0 28px 90px rgba(31, 4, 10, 0.35); }
+    .modal-close { position: absolute; z-index: 4; top: 13px; right: 13px; display: grid; width: 34px; height: 34px; place-items: center; color: #fff; background: rgba(66, 7, 17, 0.38); border: 1px solid rgba(255, 255, 255, 0.42); border-radius: 11px; cursor: pointer; backdrop-filter: blur(8px); }
+    .modal-close:hover { background: rgba(66, 7, 17, 0.65); }
+    .modal-image { position: relative; height: 235px; overflow: hidden; background: linear-gradient(135deg, #ce5d58, #8f0a21 70%); }
+    .modal-image::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, rgba(56, 5, 14, 0.62) 100%); }
+
+    .fade-enter-active, .fade-leave-active { transition: opacity 220ms ease; }
+    .fade-enter-from, .fade-leave-to { opacity: 0; }
+    .drawer-enter-active, .drawer-leave-active { transition: opacity 240ms ease; }
+    .drawer-enter-active .district-drawer, .drawer-leave-active .district-drawer { transition: transform 300ms cubic-bezier(0.22, 0.8, 0.32, 1); }
+    .drawer-enter-from, .drawer-leave-to { opacity: 0; }
+    .drawer-enter-from .district-drawer, .drawer-leave-to .district-drawer { transform: translateX(100%); }
+    .modal-enter-active, .modal-leave-active { transition: opacity 220ms ease; }
+    .modal-enter-active .team-modal, .modal-leave-active .team-modal { transition: transform 260ms cubic-bezier(0.22, 0.8, 0.32, 1); }
+    .modal-enter-from, .modal-leave-to { opacity: 0; }
+    .modal-enter-from .team-modal, .modal-leave-to .team-modal { transform: translateY(18px) scale(0.98); }
+
+    .toast { position: fixed; z-index: 200; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom)); max-width: calc(100% - 30px); padding: 10px 14px; color: #fff9e8; background: rgba(78, 11, 22, 0.94); border: 1px solid rgba(255, 217, 104, 0.32); border-radius: 999px; box-shadow: 0 10px 26px rgba(39, 5, 10, 0.25); font-size: 11px; font-weight: 800; transform: translateX(-50%); animation: toastIn 220ms ease both; }
+    @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+    .boot-screen { position: fixed; inset: 0; z-index: 300; display: grid; place-items: center; padding: 24px; color: #4b2c27; background: radial-gradient(circle at 50% 35%, rgba(255, 215, 0, 0.22), transparent 22rem), linear-gradient(145deg, #fffaf1, #f1e8dc); transition: opacity 360ms ease, visibility 360ms ease; }
+    .boot-screen.is-hidden { visibility: hidden; opacity: 0; pointer-events: none; }
+    .boot-spinner { display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 18px; }
+    .boot-spinner span { width: 6px; height: 6px; background: var(--party-red); border-radius: 50%; animation: bootBounce 1.1s ease-in-out infinite; }
+    .boot-spinner span:nth-child(2) { animation-delay: 140ms; }
+    .boot-spinner span:nth-child(3) { animation-delay: 280ms; }
+    .boot-screen.is-error .boot-spinner { display: none; }
+    @keyframes bootBounce { 0%, 60%, 100% { opacity: 0.35; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-5px); } }
+    @keyframes markerPulse { 0% { transform: translateX(-50%) scale(0.65); opacity: 0.72; } 75%, 100% { transform: translateX(-50%) scale(1.75); opacity: 0; } }
+
+    @media (min-width: 900px) { .team-modal { overflow: hidden; } }
+    @media (max-width: 700px) {
+      .hero-bar { padding: calc(13px + env(safe-area-inset-top)) 13px 14px; }
+      .brand-emblem { width: 48px; height: 48px; border-radius: 15px 15px 15px 5px; }
+      .brand-emblem > i { font-size: 21px; }
+      .hero-title { font-size: 19px; }
+      .mode-switch { width: 100%; max-width: calc(100vw - 26px); }
+      .mode-button { flex: 1 1 0; padding: 10px 6px; font-size: 11px; }
+      .chart-shell { height: 390px; }
+      .district-backdrop { align-items: flex-end; padding: 0; }
+      .district-drawer { width: 100%; min-height: 0; max-height: 91dvh; border-radius: 24px 24px 0 0; }
+      .drawer-enter-from .district-drawer, .drawer-leave-to .district-drawer { transform: translateY(100%); }
+      .team-thumb { flex-basis: 96px; height: 82px; }
+      .static-map-shell { height: calc(100dvh - 260px); min-height: 390px; border-radius: 19px; }
+      .modal-backdrop { padding: 10px; }
+      .team-modal { max-height: 93dvh; border-radius: 21px; }
+      .modal-image { height: 205px; }
+    }
+    @media (max-width: 390px) {
+      .brand-emblem { width: 43px; height: 43px; }
+      .hero-title { font-size: 17px; }
+      .team-thumb { flex-basis: 77px; height: 72px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div id="boot-screen" class="boot-screen" aria-live="polite">
+    <div class="max-w-xs text-center">
+      <div class="mx-auto grid h-[68px] w-[68px] place-items-center rounded-[21px_21px_21px_7px] border-[3px] border-white bg-gradient-to-br from-[#fff8d4] to-[#ffd96a] text-[28px] text-partyDeep shadow-[0_14px_30px_rgba(133,22,38,.2)]">
+        <i class="fa-solid fa-hand-holding-heart"></i>
+      </div>
+      <h1 id="boot-title" class="mt-4 text-[19px] font-black text-[#4b2c27]">通州区党建志愿服务地图</h1>
+      <p id="boot-message" class="mt-1.5 text-[11px] leading-relaxed text-[#8c746c]">正在加载地图资源，请稍候…</p>
+      <div class="boot-spinner" aria-hidden="true"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+
+  <div id="app" v-cloak>
+    <div class="min-h-dvh">
+      <header class="hero-bar">
+        <div class="hero-inner mx-auto max-w-[1380px]">
+          <div class="flex flex-col gap-3.5 md:flex-row md:items-center md:justify-between">
+            <div class="flex min-w-0 items-center gap-3">
+              <div class="brand-emblem" aria-hidden="true">
+                <i class="fa-solid fa-hand-holding-heart"></i>
+                <span class="brand-star"><i class="fa-solid fa-star"></i></span>
+              </div>
+              <div class="min-w-0">
+                <p class="eyebrow-line mb-1 flex items-center gap-2 text-[10px] font-extrabold tracking-[0.2em] text-[#fff0ba]"><span>TONGZHOU VOLUNTEER</span></p>
+                <h1 class="hero-title">通州区党建志愿服务地图</h1>
+                <p class="mt-1 text-[11px] tracking-[0.08em] text-[#fff6de]/70">党建领航 · 志愿同行 · 共建美好副中心</p>
+              </div>
+            </div>
+
+            <nav class="mode-switch" aria-label="地图视图切换">
+              <button type="button" class="mode-button" :class="{ 'is-active': viewMode === 'overview' }" @click="switchView('overview')">
+                <i class="fa-solid fa-map" aria-hidden="true"></i><span>全区总览</span>
+              </button>
+              <button type="button" class="mode-button" :class="{ 'is-active': viewMode === 'points' }" @click="switchView('points')">
+                <i class="fa-solid fa-location-dot" aria-hidden="true"></i><span>点位地图</span>
+              </button>
+            </nav>
+          </div>
+
+          <div class="mt-3.5 flex items-center gap-2 overflow-x-auto whitespace-nowrap text-[10px] font-bold tracking-[0.06em] text-[#fff7de]/75 [scrollbar-width:none]">
+            <span class="inline-flex items-center gap-1.5"><i class="fa-solid fa-building-columns text-gold"></i>{{ districtNames.length }} 个街镇</span>
+            <span class="opacity-30">·</span>
+            <span class="inline-flex items-center gap-1.5"><i class="fa-solid fa-people-group text-gold"></i>{{ totalTeams }} 支服务队</span>
+            <span class="opacity-30">·</span>
+            <span class="inline-flex items-center gap-1.5"><i class="fa-solid fa-heart text-gold"></i>{{ totalMembers.toLocaleString() }} 名志愿者</span>
+            <span class="opacity-30">·</span>
+            <span class="inline-flex items-center gap-1.5"><i class="fa-regular fa-clock text-gold"></i>党建引领 服务常在</span>
+          </div>
+        </div>
+      </header>
+
+      <main class="mx-auto w-full max-w-[1380px] px-3 pb-6 pt-3.5 md:px-[18px] md:pb-8 md:pt-5">
+        <section class="mb-3.5 grid grid-cols-2 gap-2 md:mb-[18px] md:grid-cols-4 md:gap-2.5" aria-label="平台数据">
+          <div class="flex min-w-0 items-center gap-2.5 rounded-[17px] border border-white/90 bg-white/90 px-3 py-2.5 shadow-[0_8px_24px_rgba(81,37,29,.09)] md:px-3.5 md:py-3">
+            <div class="grid h-8 w-8 shrink-0 place-items-center rounded-[11px] bg-[#fbe9e6] text-[14px] text-party"><i class="fa-solid fa-map-location-dot"></i></div>
+            <div><strong class="block text-[20px] font-black leading-none text-partyDeep">{{ districtNames.length }}</strong><span class="mt-1 block whitespace-nowrap text-[10px] font-bold text-[#7c6c68]">街镇覆盖</span></div>
+          </div>
+          <div class="flex min-w-0 items-center gap-2.5 rounded-[17px] border border-white/90 bg-white/90 px-3 py-2.5 shadow-[0_8px_24px_rgba(81,37,29,.09)] md:px-3.5 md:py-3">
+            <div class="grid h-8 w-8 shrink-0 place-items-center rounded-[11px] bg-[#fbe9e6] text-[14px] text-party"><i class="fa-solid fa-flag"></i></div>
+            <div><strong class="block text-[20px] font-black leading-none text-partyDeep">{{ totalTeams }}</strong><span class="mt-1 block whitespace-nowrap text-[10px] font-bold text-[#7c6c68]">志愿服务队伍</span></div>
+          </div>
+          <div class="flex min-w-0 items-center gap-2.5 rounded-[17px] border border-white/90 bg-white/90 px-3 py-2.5 shadow-[0_8px_24px_rgba(81,37,29,.09)] md:px-3.5 md:py-3">
+            <div class="grid h-8 w-8 shrink-0 place-items-center rounded-[11px] bg-[#fbe9e6] text-[14px] text-party"><i class="fa-solid fa-user-group"></i></div>
+            <div><strong class="block text-[20px] font-black leading-none text-partyDeep">{{ totalMembers.toLocaleString() }}</strong><span class="mt-1 block whitespace-nowrap text-[10px] font-bold text-[#7c6c68]">登记志愿者</span></div>
+          </div>
+          <div class="flex min-w-0 items-center gap-2.5 rounded-[17px] border border-white/90 bg-white/90 px-3 py-2.5 shadow-[0_8px_24px_rgba(81,37,29,.09)] md:px-3.5 md:py-3">
+            <div class="grid h-8 w-8 shrink-0 place-items-center rounded-[11px] bg-[#fbe9e6] text-[14px] text-party"><i class="fa-solid fa-star"></i></div>
+            <div><strong class="block text-[20px] font-black leading-none text-partyDeep">100%</strong><span class="mt-1 block whitespace-nowrap text-[10px] font-bold text-[#7c6c68]">党建品牌覆盖</span></div>
+          </div>
+        </section>
+
+        <section v-show="viewMode === 'overview'" class="view-panel" aria-label="全区地图概览">
+          <div class="mb-3 flex items-end justify-between gap-4">
+            <div>
+              <p class="mb-1 flex items-center gap-2 text-[10px] font-black tracking-[0.18em] text-party"><span class="h-[3px] w-[18px] rounded-full bg-party"></span>全区志愿服务网络</p>
+              <h2 class="m-0 text-[clamp(20px,2.2vw,27px)] font-black tracking-[0.02em] text-[#302524]">一张地图，找到身边的志愿力量</h2>
+              <p class="mt-1 text-[11px] leading-relaxed text-[#7c6c68]">点击地图中的街镇，查看属地志愿服务队伍与特色项目。</p>
+            </div>
+            <p class="hidden shrink-0 text-[10px] text-[#7c6c68] md:block"><strong class="text-party">{{ districtNames.length }}</strong> 个街镇 · 持续更新中</p>
+          </div>
+
+          <div class="grid items-stretch gap-4 lg:grid-cols-[minmax(0,1.55fr)_minmax(305px,.78fr)]">
+            <article class="panel-card relative overflow-hidden">
+              <div class="flex items-center justify-between gap-3 px-3.5 pb-2.5 pt-3.5 md:px-[18px] md:pt-4">
+                <p class="m-0 flex items-center gap-2 text-[13px] font-black"><i class="fa-solid fa-map text-party"></i>通州区街镇分布</p>
+                <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#7c6c68]"><span class="h-[7px] w-[7px] rounded-full bg-[#30a46c] shadow-[0_0_0_4px_rgba(48,164,108,.12)]"></span>服务地图</span>
+              </div>
+              <div class="chart-shell mx-[7px] mb-[7px] md:mx-2.5 md:mb-2.5">
+                <div ref="districtChart" class="district-chart" role="img" aria-label="通州区街镇志愿服务分布模拟地图"></div>
+                <div class="chart-note"><i class="fa-solid fa-hand-pointer"></i>点击色块查看街镇队伍</div>
+              </div>
+              <div class="flex items-center justify-between gap-3 px-3.5 pb-3.5 text-[10px] leading-relaxed text-[#7c6c68] md:px-[18px] md:pb-4">
+                <span><strong class="text-partyDeep">提示：</strong>色块中数字为属地服务队数量，地图为交互示意。</span><i class="fa-solid fa-circle-info text-party"></i>
+              </div>
+            </article>
+
+            <aside class="panel-card flex min-w-0 flex-col p-3.5 md:p-[17px]">
+              <div class="flex items-start justify-between gap-3">
+                <div><h3 class="m-0 text-[16px] font-black">街镇服务队</h3><p class="mt-1 text-[10px] leading-relaxed text-[#7c6c68]">按街镇快速进入队伍列表</p></div>
+                <span class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#fbe9e6] px-2 py-1.5 text-[10px] font-black text-party"><i class="fa-solid fa-layer-group"></i>{{ totalTeams }} 支</span>
+              </div>
+              <div class="mt-4 grid grid-cols-2 gap-2">
+                <button v-for="district in districtNames" :key="district" type="button" class="district-tile" :class="{ 'is-active': selectedDistrict === district }" @click="openDistrict(district)">
+                  <span class="district-tile-icon grid h-[26px] w-[26px] place-items-center rounded-lg bg-[#fbe9e6] text-[11px] text-party"><i class="fa-solid fa-location-dot"></i></span>
+                  <span class="district-tile-name block max-w-full overflow-hidden text-[11px] font-black text-[#302524] text-ellipsis whitespace-nowrap">{{ district }}</span>
+                  <span class="district-tile-meta block text-[9px] font-bold text-[#7c6c68]">{{ mockData[district].length }} 支队伍 · 点击查看</span>
+                </button>
+              </div>
+              <div class="mt-auto flex items-start gap-2 pt-4 text-[10px] leading-relaxed text-[#7c6c68]">
+                <i class="mt-0.5 text-party"></i><span><strong class="text-partyDeep">小提示：</strong>也可以直接点击左侧地图上的街镇色块，地图会同步高亮并打开队伍面板。</span>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section v-show="viewMode === 'points'" class="view-panel" aria-label="点位地图">
+          <div class="mb-3 flex items-end justify-between gap-4">
+            <div>
+              <p class="mb-1 flex items-center gap-2 text-[10px] font-black tracking-[0.18em] text-party"><span class="h-[3px] w-[18px] rounded-full bg-party"></span>地图点位视角</p>
+              <h2 class="m-0 text-[clamp(20px,2.2vw,27px)] font-black tracking-[0.02em] text-[#302524]">从全景地图，走进每一支队伍</h2>
+              <p class="mt-1 text-[11px] leading-relaxed text-[#7c6c68]">支持鼠标拖拽、滚轮缩放与手机双指缩放，点击红色标点查看队伍详情。</p>
+            </div>
+            <span class="hidden shrink-0 items-center gap-2 rounded-full border border-white/90 bg-white/80 px-2.5 py-2 text-[10px] font-bold text-[#7c6c68] shadow-[0_8px_24px_rgba(81,37,29,.09)] md:inline-flex"><i class="fa-solid fa-arrows-up-down-left-right text-party"></i>拖动地图 · 双指缩放</span>
+          </div>
+
+          <div class="static-map-shell">
+            <div ref="mapViewport" class="panzoom-viewport" @wheel.prevent="handleWheel">
+              <div ref="panzoomLayer" class="panzoom-canvas">
+                <img class="map-image" :class="{ 'is-hidden': mapImageFailed }" :src="mapImageSrc" alt="通州区地图占位底图" draggable="false" @error="handleMapImageError" />
+                <svg class="map-fallback-art" viewBox="0 0 1000 850" aria-hidden="true">
+                  <path d="M120 230 L260 90 L500 62 L720 120 L900 300 L880 600 L700 760 L420 805 L190 650 Z" fill="rgba(245,231,206,.82)" stroke="rgba(158,91,66,.35)" stroke-width="3" />
+                  <path d="M270 190 L470 150 L590 265 L520 410 L335 385 Z M590 265 L780 225 L850 400 L720 510 L520 410 Z M335 385 L520 410 L565 570 L420 690 L270 575 Z M520 410 L720 510 L690 690 L565 570 Z" fill="rgba(250,237,215,.72)" stroke="rgba(176,113,77,.27)" stroke-width="2" />
+                  <path d="M90 460 C260 420 380 520 540 470 S780 470 930 400" fill="none" stroke="rgba(199,151,80,.35)" stroke-width="5" stroke-dasharray="10 13" />
+                </svg>
+                <div class="map-wash" aria-hidden="true"></div>
+                <button v-for="team in pointTeams" :key="team.id" type="button" class="map-marker" :class="{ 'is-active': selectedTeam && selectedTeam.id === team.id }" :style="markerStyle(team)" :aria-label="`查看${team.name}详情`" @pointerdown.stop @mousedown.stop @touchstart.stop @click.stop="openTeam(team)">
+                  <span class="marker-pulse" aria-hidden="true"></span><span class="marker-pulse second" aria-hidden="true"></span>
+                  <span class="marker-pin" aria-hidden="true"><i class="fa-solid fa-location-dot"></i></span>
+                  <span class="marker-label">{{ team.shortName }}</span>
+                </button>
+              </div>
+            </div>
+            <div class="map-float-chip left-2.5 top-2.5 md:left-3.5 md:top-3.5"><i class="fa-solid fa-compass"></i>北京城市副中心 · 通州区</div>
+            <div class="map-float-chip right-2.5 top-2.5 md:right-3.5 md:top-3.5"><i class="fa-solid fa-circle-nodes"></i>{{ pointTeams.length }} 个示范点位</div>
+            <div class="map-float-chip bottom-14 left-2.5 md:bottom-16 md:left-3.5"><i class="fa-solid fa-star"></i>党建红 · 志愿心 · 副中心</div>
+            <div class="map-float-chip bottom-3 left-2.5 md:bottom-3.5 md:left-3.5"><i class="fa-solid fa-hand-pointer"></i>点击标点查看队伍详情</div>
+            <div v-if="panzoomError" class="absolute bottom-3 right-3 z-10 max-w-[260px] rounded-[10px] border border-[#f4c36a] bg-[#fff2dc] px-3 py-2 text-[10px] leading-relaxed text-[#8a3c1a] shadow-lg"><i class="fa-solid fa-triangle-exclamation"></i> 缩放组件加载失败，请检查网络后刷新页面。</div>
+            <div class="zoom-controls" aria-label="地图缩放控制">
+              <button type="button" class="zoom-button" aria-label="放大地图" :disabled="!panzoomReady || zoomPercent >= 300" @click="zoomIn"><i class="fa-solid fa-plus"></i></button>
+              <div class="zoom-level">{{ zoomPercent }}%</div>
+              <button type="button" class="zoom-button" aria-label="缩小地图" :disabled="!panzoomReady || zoomPercent <= 100" @click="zoomOut"><i class="fa-solid fa-minus"></i></button>
+              <span class="zoom-divider"></span>
+              <button type="button" class="zoom-button" aria-label="复位地图" :disabled="!panzoomReady" @click="resetMap"><i class="fa-solid fa-house"></i></button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <transition name="drawer">
+      <div v-if="selectedDistrict" class="overlay-backdrop district-backdrop" @click.self="closeDistrict">
+        <aside class="district-drawer" role="dialog" aria-modal="true" :aria-label="`${selectedDistrict}志愿服务队列表`">
+          <header class="drawer-hero">
+            <div class="relative z-[1] flex items-center justify-between gap-3">
+              <button type="button" class="flex items-center gap-2 bg-transparent py-1 text-[11px] font-extrabold text-[#fff7dd]/85 hover:text-gold" @click="closeDistrict"><i class="fa-solid fa-arrow-left"></i>返回全区地图</button>
+              <button type="button" class="grid h-[30px] w-[30px] place-items-center rounded-[9px] border border-white/15 bg-white/10 text-[#fff7de] hover:bg-white/20" aria-label="关闭队伍列表" @click="closeDistrict"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="relative z-[1] mt-[18px] flex items-end justify-between gap-4">
+              <div>
+                <p class="mb-1.5 text-[10px] font-extrabold tracking-[0.16em] text-[#ffeda4]/85">STREET VOLUNTEER TEAMS</p>
+                <h2 class="m-0 text-[clamp(24px,4vw,32px)] font-black leading-tight tracking-[0.03em]">{{ selectedDistrict }}志愿服务队</h2>
+                <p class="mt-1.5 text-[11px] leading-relaxed text-[#fff7e0]/75">党建引领聚合力，志愿服务暖人心</p>
+              </div>
+              <div class="grid h-[65px] w-[65px] shrink-0 place-items-center rounded-[18px] border border-[#ffda70]/30 bg-[#49000c]/25 text-center text-gold"><div><strong class="block text-[22px] leading-none">{{ selectedDistrictTeams.length }}</strong><span class="mt-1 block text-[9px] font-bold text-[#fff5d2]/70">支队伍</span></div></div>
+            </div>
+          </header>
+          <div class="drawer-scroll px-3 pb-[calc(22px+env(safe-area-inset-bottom))] pt-3.5 md:px-[17px]">
+            <div class="mb-2.5 flex items-center justify-between gap-2 text-[10px] font-extrabold text-[#7c6c68]"><span>选择一支队伍，了解他们的故事</span><strong class="text-partyDeep">{{ selectedDistrictTeams.length }} 支</strong></div>
+            <button v-for="team in selectedDistrictTeams" :key="team.id" type="button" class="team-card mb-2.5" @click="openTeam(team)">
+              <div class="team-thumb"><img :src="team.img" :alt="team.name" loading="lazy" @error="handleImageError" /></div>
+              <div class="flex min-w-0 flex-1 flex-col justify-center py-0.5 pr-0.5">
+                <span class="mb-1 text-[9px] font-black tracking-[0.08em] text-party">{{ team.category }}</span>
+                <strong class="block overflow-hidden text-[13px] font-black leading-snug text-[#302524] text-ellipsis whitespace-nowrap">{{ team.name }}</strong>
+                <p class="mt-1 line-clamp-2 text-[10px] leading-relaxed text-[#7c6c68]">{{ team.intro }}</p>
+                <div class="mt-2 flex items-center gap-2.5 text-[9px] font-bold text-[#9b7c73]"><span><i class="fa-solid fa-user-group mr-1 text-party"></i>{{ team.members }} 人</span><span><i class="fa-regular fa-clock mr-1 text-party"></i>{{ team.hours }} 小时</span></div>
+              </div>
+              <span class="grid w-5 shrink-0 self-center place-items-center text-[11px] text-party"><i class="fa-solid fa-chevron-right"></i></span>
+            </button>
+            <div v-if="!selectedDistrictTeams.length" class="px-4 py-10 text-center text-xs text-[#7c6c68]">该街镇暂无队伍数据。</div>
+          </div>
+        </aside>
+      </div>
+    </transition>
+
+    <transition name="modal">
+      <div v-if="selectedTeam" class="overlay-backdrop modal-backdrop" @click.self="closeTeam">
+        <article class="team-modal" role="dialog" aria-modal="true" :aria-label="`${selectedTeam.name}详情`">
+          <button type="button" class="modal-close" aria-label="关闭队伍详情" @click="closeTeam"><i class="fa-solid fa-xmark"></i></button>
+          <div class="modal-image"><img :src="selectedTeam.img" :alt="selectedTeam.name" @error="handleImageError" /><span class="absolute bottom-4 left-[18px] z-[2] inline-flex max-w-[calc(100%-36px)] items-center gap-2 rounded-full border border-white/30 bg-[#650616]/60 px-2.5 py-1.5 text-[10px] font-extrabold text-[#fff8df] backdrop-blur-md"><i class="fa-solid fa-star text-gold"></i>{{ selectedTeam.category }} · 党建引领</span></div>
+          <div class="px-[15px] pb-[calc(20px+env(safe-area-inset-bottom))] pt-[17px] md:px-[21px] md:pb-6 md:pt-5">
+            <p class="mb-1.5 flex items-center gap-2 text-[10px] font-black tracking-[0.15em] text-party"><span class="h-[3px] w-[17px] rounded-full bg-party"></span>VOLUNTEER TEAM PROFILE</p>
+            <h2 class="m-0 text-[clamp(23px,4vw,31px)] font-black leading-tight text-[#302524]">{{ selectedTeam.name }}</h2>
+            <p class="mt-1.5 text-[11px] text-[#7c6c68]"><i class="fa-solid fa-location-dot mr-1 text-party"></i>北京市通州区 · {{ selectedTeam.district }}</p>
+            <div class="my-4 grid grid-cols-3 gap-2 md:my-[18px]">
+              <div class="rounded-xl border border-[#ab6948]/10 bg-[#fff8ed] px-2.5 py-2.5"><strong class="block text-[17px] leading-none text-partyDeep">{{ selectedTeam.members }}</strong><span class="mt-1.5 block text-[9px] font-bold text-[#7c6c68]">登记志愿者</span></div>
+              <div class="rounded-xl border border-[#ab6948]/10 bg-[#fff8ed] px-2.5 py-2.5"><strong class="block text-[17px] leading-none text-partyDeep">{{ selectedTeam.hours }}</strong><span class="mt-1.5 block text-[9px] font-bold text-[#7c6c68]">累计服务小时</span></div>
+              <div class="rounded-xl border border-[#ab6948]/10 bg-[#fff8ed] px-2.5 py-2.5"><strong class="block text-[17px] leading-none text-partyDeep">{{ selectedTeam.projects }}</strong><span class="mt-1.5 block text-[9px] font-bold text-[#7c6c68]">品牌服务项目</span></div>
+            </div>
+            <h3 class="mb-2 flex items-center gap-2 text-[12px] font-black text-[#302524]"><i class="fa-solid fa-quote-left text-party"></i>队伍介绍</h3>
+            <p class="m-0 text-xs leading-[1.85] text-[#6e5b56]">{{ selectedTeam.detail }}</p>
+            <div class="mt-3.5 flex flex-wrap gap-1.5"><span v-for="tag in selectedTeam.tags" :key="tag" class="rounded-full border border-party/10 bg-[#fbe9e6] px-2 py-1 text-[9px] font-extrabold text-partyDeep"># {{ tag }}</span></div>
+            <h3 class="mb-2 mt-5 flex items-center gap-2 text-[12px] font-black text-[#302524]"><i class="fa-solid fa-calendar-check text-party"></i>常态化服务</h3>
+            <div class="grid gap-1.5"><div v-for="activity in selectedTeam.activities" :key="activity" class="flex items-center gap-2 rounded-[10px] bg-[#fffaf1] px-2.5 py-2 text-[10px] font-bold text-[#705851]"><i class="fa-solid fa-circle-check text-[#2c9a69]"></i><span>{{ activity }}</span></div></div>
+            <div class="mt-5 flex gap-2.5">
+              <button type="button" class="flex min-h-[42px] flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-partyDeep to-party px-3.5 text-[11px] font-black text-white shadow-[0_8px_16px_rgba(143,10,33,.22)] hover:brightness-110" @click="showJoinToast"><i class="fa-solid fa-hand-holding-heart"></i>我想加入这支队伍</button>
+              <button type="button" class="flex min-h-[42px] items-center justify-center gap-2 rounded-xl border border-partyDeep/15 bg-[#fffaf1] px-3.5 text-[11px] font-black text-partyDeep hover:bg-[#fbe9e6]" @click="closeTeam"><i class="fa-solid fa-arrow-left"></i>返回列表</button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </transition>
+
+    <div v-if="toast" class="toast" role="status"><i class="fa-solid fa-circle-check"></i> {{ toast }}</div>
+  </div>
+
+  <script src="https://unpkg.com/vue@3.4.31/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+  <script src="https://unpkg.com/@panzoom/panzoom@4.5.0/dist/panzoom.min.js"></script>
+  <script>
+    const { createApp } = Vue;
+
+    const createTeam = (id, district, name, shortName, x, y, intro, category, members, hours, projects, tags, detail, activities) => ({
+      id, district, name, shortName, x, y, intro, category, members, hours, projects, tags, detail, activities,
+      img: `https://picsum.photos/seed/tongzhou-volunteer-${id}/800/520`
+    });
+
+    const mockData = {
+      '五街镇': [
+        createTeam(1, '五街镇', '五街镇青年志愿先锋队', '五街镇', '30%', '40%', '这是一支充满活力的青年队伍，扎根社区一线开展邻里守望、助老扶幼等志愿服务。', '青年先锋', 86, '4,820', 6, ['邻里守望', '助老扶幼', '文明引导'], '五街镇青年志愿先锋队由辖区青年党员、团员和热心居民共同组成。队伍坚持党建带团建、志愿促治理的工作思路，常态化开展周末清洁日、独居老人陪伴和青少年成长课堂，用青春行动为基层治理注入温暖力量。', ['每周六社区环境清洁行动', '独居老人定期探访与陪伴', '青少年课后成长陪伴课堂']),
+        createTeam(2, '五街镇', '五街镇巾帼志愿队', '巾帼志愿', '42%', '28%', '由社区热心大姐组成，聚焦家庭关爱、矛盾调解和巾帼宣讲。', '巾帼关爱', 64, '3,960', 4, ['家庭关爱', '矛盾调解', '巾帼宣讲'], '五街镇巾帼志愿队以女性党员为骨干，吸纳社区热心大姐、退休教师和全职妈妈加入。队伍发挥亲和细腻的优势，常态化参与家庭矛盾调解、亲子阅读、妇女权益宣传和困难家庭走访，打造娘家人式的社区支持网络。', ['每月家庭教育主题沙龙', '困难家庭结对走访', '巾帼志愿宣讲进社区'])
+      ],
+      '中仓街道': [
+        createTeam(3, '中仓街道', '中仓街道便民服务队', '中仓便民', '50%', '60%', '提供磨刀、理发、小家电维修等便民服务，把温暖送到居民家门口。', '便民服务', 118, '8,600', 8, ['便民维修', '爱心义剪', '生活服务'], '中仓街道便民服务队由社区党员、手艺人、退休职工和物业志愿者组成。队伍以小事不出社区、服务就在身边为目标，定期开展磨刀、理发、小家电维修和缝补等服务，并为高龄老人提供预约上门服务。', ['每月便民服务大集', '高龄老人预约上门维修', '爱心义剪进社区']),
+        createTeam(4, '中仓街道', '中仓街道邻里守望志愿队', '邻里守望', '60%', '50%', '通过楼门长和志愿者联动，构建有温度的邻里互助网络。', '邻里守望', 72, '5,210', 5, ['楼门治理', '邻里互助', '平安巡防'], '中仓街道邻里守望志愿队以楼门长、党员中心户为骨干，建立发现、响应、回访的邻里互助机制。志愿者常态化开展楼门议事、困难群体探访、安全隐患排查和文明养宠宣传，让邻里关系更亲近、社区治理更精细。', ['楼门议事会', '困难群体定期探访', '社区安全巡查'])
+      ],
+      '玉桥街道': [
+        createTeam(5, '玉桥街道', '玉桥街道环保卫士', '玉桥环保', '70%', '30%', '致力于社区垃圾分类宣传、环境整治和绿色生活方式倡导。', '绿色环保', 95, '6,780', 7, ['垃圾分类', '环境整治', '绿色生活'], '玉桥街道环保卫士是一支以绿色生活为主题的志愿服务队伍。队伍通过垃圾分类宣讲、桶前值守、旧物置换、社区花园共建等活动，引导居民从身边小事做起，共同参与美丽社区建设。', ['垃圾分类桶前值守', '旧物置换与资源回收', '社区花园共建行动']),
+        createTeam(6, '玉桥街道', '玉桥街道银龄互助队', '银龄互助', '78%', '45%', '以低龄老人服务高龄老人，让银龄生活更有陪伴、更有依靠。', '银龄互助', 58, '3,420', 4, ['助老服务', '健康陪伴', '银龄互助'], '玉桥街道银龄互助队探索低龄助高龄、健康助失能的互助模式，由退休党员和热心居民组成志愿服务小组。队伍定期上门陪聊、代买代办、协助健康监测，并组织节日慰问和兴趣活动，让辖区老人感受到社区大家庭的温暖。', ['高龄老人上门陪伴', '节日慰问与代买代办', '银龄兴趣小组活动'])
+      ],
+      '梨园镇': [
+        createTeam(7, '梨园镇', '梨园镇红领先锋队', '梨园红领', '36%', '66%', '党员带头参与社区治理，把红色力量汇聚到群众身边。', '党员先锋', 102, '7,250', 9, ['党员先锋', '社区治理', '民意收集'], '梨园镇红领先锋队由机关党员、社区党员和共建单位党员组成，围绕群众急难愁盼开展微心愿认领、社区议事、政策宣讲和文明创建等服务。队伍坚持亮身份、作表率，把党员先锋作用融入网格治理和为民服务全过程。', ['群众微心愿认领', '社区议事协商', '政策宣讲进楼门']),
+        createTeam(8, '梨园镇', '梨园镇文化惠民志愿队', '梨园文化', '48%', '73%', '以文化人、以艺聚心，为群众带来丰富的家门口文化活动。', '文化惠民', 77, '4,100', 5, ['文化惠民', '非遗传承', '全民阅读'], '梨园镇文化惠民志愿队由文艺骨干、非遗传承人和阅读推广人组成。队伍依托新时代文明实践阵地，开展公益演出、非遗体验、亲子阅读和书法绘画课堂，让居民在家门口享受文化服务，增进邻里交流与社区认同。', ['周末公益文化演出', '非遗手工体验课堂', '亲子阅读分享会'])
+      ],
+      '宋庄镇': [
+        createTeam(9, '宋庄镇', '宋庄镇艺术乡建志愿队', '宋庄艺术', '62%', '22%', '艺术家与村民携手，用艺术点亮乡村公共空间。', '艺术乡建', 69, '3,180', 4, ['艺术乡建', '公共美育', '乡村共建'], '宋庄镇艺术乡建志愿队汇聚艺术家、设计师和乡村青年，通过墙绘创作、公共艺术课堂、乡村空间微改造等方式参与美丽乡村建设。队伍让艺术走进村庄和日常生活，激发村民参与公共事务的热情。', ['乡村墙绘与公共艺术共创', '儿童美育公益课堂', '艺术市集志愿服务']),
+        createTeam(10, '宋庄镇', '宋庄镇平安巡防志愿队', '宋庄平安', '72%', '18%', '常态化参与治安巡防和应急宣传，守护辖区平安。', '平安建设', 84, '5,630', 6, ['平安巡防', '应急宣传', '矛盾调解'], '宋庄镇平安巡防志愿队由党员志愿者、退伍军人和热心村民组成，协助开展重点区域巡逻、安全隐患排查、反诈宣传和应急演练。队伍坚持预防在先、发现在早、处置在小，用实际行动守护辖区平安。', ['夜间平安志愿巡逻', '反诈与消防安全宣传', '应急演练协助'])
+      ],
+      '张家湾镇': [
+        createTeam(11, '张家湾镇', '张家湾镇运河守护队', '运河守护', '76%', '66%', '守护大运河生态与文化，让运河故事在志愿行动中延续。', '运河守护', 112, '8,140', 9, ['运河保护', '生态巡护', '文化传播'], '张家湾镇运河守护队聚焦大运河生态保护与文化传承，组织志愿者开展河道沿线环境清洁、文明游河引导、运河文化讲解等活动。队伍将生态保护与乡土文化传播相结合，带动更多居民了解运河、爱护运河。', ['运河沿线环境清洁', '文明游河宣传引导', '运河文化故事宣讲']),
+        createTeam(12, '张家湾镇', '张家湾镇青春助农队', '青春助农', '66%', '75%', '青年志愿者走进田间地头，为乡村振兴贡献青春力量。', '乡村振兴', 53, '2,860', 4, ['乡村振兴', '助农增收', '青年实践'], '张家湾镇青春助农队由青年党员、返乡大学生和农业技术志愿者组成，围绕农产品推广、农事体验、乡村文旅宣传等开展志愿服务。队伍积极链接资源，帮助农户拓展宣传渠道，也让更多青年在乡村实践中了解基层、服务群众。', ['农产品公益推广', '农事体验志愿活动', '乡村文旅路线宣传'])
+      ],
+      '永顺镇': [
+        createTeam(13, '永顺镇', '永顺镇暖心助老队', '永顺助老', '56%', '42%', '聚焦老年人日常生活需求，提供陪伴、代办和健康关怀。', '暖心助老', 91, '6,430', 7, ['助老服务', '健康关怀', '生活代办'], '永顺镇暖心助老队以社区高龄、独居和行动不便老人为重点服务对象，提供上门探访、代买代办、健康监测、智能手机教学等服务。队伍通过一对一结对和定期回访，让关爱真正落到日常、落到细微处。', ['独居老人结对探访', '智能手机使用教学', '健康监测与生活代办']),
+        createTeam(14, '永顺镇', '永顺镇文明引导队', '文明引导', '64%', '56%', '在路口、公园和社区倡导文明行为，传递城市文明温度。', '文明引导', 66, '3,890', 5, ['文明交通', '垃圾分类', '公共秩序'], '永顺镇文明引导队围绕文明城区创建开展常态化志愿服务，在主要交通路口开展文明交通引导，在公园和社区宣传垃圾分类、文明养宠、公共秩序等理念。志愿者用耐心和微笑传递文明，让志愿红成为城市街头一道温暖的风景线。', ['文明交通路口引导', '垃圾分类宣传', '文明养宠倡议行动'])
+      ],
+      '潞城镇': [
+        createTeam(15, '潞城镇', '潞城镇红色宣讲队', '潞城宣讲', '82%', '56%', '用群众听得懂的语言讲好党的故事、传递党的声音。', '红色宣讲', 47, '2,540', 4, ['红色宣讲', '理论普及', '基层党建'], '潞城镇红色宣讲队由基层党员、退休教师和青年干部组成，依托新时代文明实践站、党群服务中心和社区广场，开展对象化、分众化、互动化宣讲。队伍用身边事讲清大道理，让党的创新理论飞入寻常百姓家。', ['红色故事进社区', '理论宣讲微课堂', '青年党员分享会']),
+        createTeam(16, '潞城镇', '潞城镇应急志愿队', '潞城应急', '88%', '38%', '平时服务、急时应急，为社区安全提供有力支撑。', '应急志愿', 73, '4,720', 6, ['应急救援', '安全宣传', '社区守护'], '潞城镇应急志愿队由党员骨干、退伍军人和具备专业技能的居民组成，平时参与安全隐患排查、应急知识普及和大型活动保障，遇到突发情况时协助开展秩序维护、物资转运和群众疏导。', ['应急救护知识培训', '社区安全隐患排查', '大型活动志愿保障'])
+      ]
+    };
+
+    const districtNames = Object.keys(mockData);
+    const districtPalette = ['#f1d2c7', '#f0c9bd', '#efd8b8', '#f3d0c2', '#f0d2bb', '#edc9c2', '#f3d8bf', '#f0cfd0'];
+    const districtFeatureCoords = {
+      '宋庄镇': [[150, 160], [338, 80], [500, 105], [530, 245], [404, 298], [224, 265]],
+      '永顺镇': [[500, 105], [718, 132], [760, 264], [640, 300], [530, 245]],
+      '五街镇': [[224, 265], [404, 298], [446, 426], [322, 496], [170, 406]],
+      '中仓街道': [[404, 298], [530, 245], [640, 300], [676, 448], [514, 480], [446, 426]],
+      '玉桥街道': [[322, 496], [446, 426], [514, 480], [578, 588], [478, 662], [320, 604]],
+      '梨园镇': [[170, 406], [322, 496], [320, 604], [430, 738], [265, 718], [145, 580]],
+      '潞城镇': [[578, 588], [676, 448], [866, 482], [878, 642], [754, 706], [650, 654]],
+      '张家湾镇': [[430, 738], [478, 662], [650, 654], [754, 706], [708, 806], [554, 826], [448, 774]]
+    };
+
+    const makeGeoJson = () => ({
+      type: 'FeatureCollection',
+      features: districtNames.map((name) => ({
+        type: 'Feature',
+        properties: { name },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [districtFeatureCoords[name].map(([x, y]) => [x, 900 - y])]
+        }
+      }))
+    });
+
+    const mapApp = createApp({
+      data() {
+        return {
+          viewMode: 'overview',
+          mockData,
+          districtNames,
+          districtPalette,
+          selectedDistrict: null,
+          selectedTeam: null,
+          chart: null,
+          chartReady: false,
+          panzoom: null,
+          panzoomReady: false,
+          panzoomError: false,
+          zoomPercent: 100,
+          markerScale: 1,
+          zoomObserver: null,
+          mapImageSrc: 'https://picsum.photos/2000/2000',
+          mapImageFailed: false,
+          toast: '',
+          toastTimer: null
+        };
+      },
+      computed: {
+        totalTeams() {
+          return this.districtNames.reduce((total, name) => total + this.mockData[name].length, 0);
+        },
+        totalMembers() {
+          return this.districtNames.reduce((total, name) => total + this.mockData[name].reduce((sum, team) => sum + team.members, 0), 0);
+        },
+        selectedDistrictTeams() {
+          return this.selectedDistrict ? this.mockData[this.selectedDistrict] || [] : [];
+        },
+        pointTeams() {
+          return [
+            this.mockData['五街镇'][0],
+            this.mockData['中仓街道'][0],
+            this.mockData['玉桥街道'][0],
+            this.mockData['宋庄镇'][0],
+            this.mockData['张家湾镇'][0],
+            this.mockData['潞城镇'][1]
+          ];
+        }
+      },
+      mounted() {
+        this.$nextTick(() => {
+          this.initDistrictChart();
+          this.applyInitialRoute();
+          window.__mapAppReady = true;
+          const bootScreen = document.getElementById('boot-screen');
+          if (bootScreen) bootScreen.classList.add('is-hidden');
+        });
+        window.addEventListener('resize', this.handleResize);
+        window.addEventListener('keydown', this.handleKeydown);
+      },
+      beforeUnmount() {
+        window.removeEventListener('resize', this.handleResize);
+        window.removeEventListener('keydown', this.handleKeydown);
+        if (this.chart) this.chart.dispose();
+        if (this.panzoom && typeof this.panzoom.destroy === 'function') this.panzoom.destroy();
+        if (this.zoomObserver) this.zoomObserver.disconnect();
+        if (this.toastTimer) window.clearTimeout(this.toastTimer);
+      },
+      methods: {
+        applyInitialRoute() {
+          const params = new URLSearchParams(window.location.search);
+          if (params.get('view') === 'points') this.switchView('points');
+          const district = params.get('district');
+          if (district && this.mockData[district]) this.openDistrict(district);
+          const teamId = Number(params.get('team'));
+          if (Number.isFinite(teamId)) {
+            const team = this.districtNames.flatMap((name) => this.mockData[name]).find((item) => item.id === teamId);
+            if (team) {
+              this.selectedDistrict = team.district;
+              this.selectedTeam = team;
+            }
+          }
+        },
+        switchView(mode) {
+          this.viewMode = mode;
+          if (this.selectedDistrict) this.closeDistrict();
+          if (mode === 'points') {
+            this.$nextTick(() => {
+              this.initPanzoom();
+              if (this.panzoom && typeof this.panzoom.resize === 'function') this.panzoom.resize();
+            });
+          } else {
+            this.$nextTick(() => {
+              if (this.chart && typeof this.chart.resize === 'function') this.chart.resize();
+            });
+          }
+        },
+        initDistrictChart() {
+          if (!window.echarts || !this.$refs.districtChart) {
+            this.chartReady = false;
+            return;
+          }
+          if (!window.echarts.getMap('tongzhou-volunteer-demo')) {
+            window.echarts.registerMap('tongzhou-volunteer-demo', makeGeoJson());
+          }
+          this.chart = window.echarts.init(this.$refs.districtChart, null, { renderer: 'canvas' });
+          this.chart.setOption({
+            animationDuration: 720,
+            animationEasing: 'cubicOut',
+            tooltip: {
+              trigger: 'item',
+              backgroundColor: 'rgba(83, 14, 24, .94)',
+              borderColor: 'rgba(255, 216, 104, .5)',
+              textStyle: { color: '#fff8e6', fontSize: 12 },
+              formatter: (params) => `<strong>${params.name}</strong><br/><span style="color:#ffd96a">${params.value} 支志愿服务队伍</span><br/><span style="color:rgba(255,248,230,.68)">点击查看队伍</span>`
+            },
+            series: [{
+              type: 'map',
+              map: 'tongzhou-volunteer-demo',
+              roam: false,
+              selectedMode: 'single',
+              layoutCenter: ['50%', '51%'],
+              layoutSize: '91%',
+              label: {
+                show: true,
+                position: 'inside',
+                color: '#66342f',
+                fontSize: 12,
+                fontWeight: 900,
+                lineHeight: 17,
+                formatter: (params) => `${params.name}\n${params.value}支`
+              },
+              itemStyle: {
+                borderColor: '#fffdf8',
+                borderWidth: 3,
+                shadowBlur: 16,
+                shadowColor: 'rgba(94, 46, 28, .12)',
+                shadowOffsetY: 4
+              },
+              emphasis: {
+                label: { color: '#fff', fontWeight: 900 },
+                itemStyle: { areaColor: '#c8102e', borderColor: '#ffe28a', borderWidth: 3, shadowBlur: 24, shadowColor: 'rgba(143, 10, 33, .3)' }
+              },
+              select: {
+                label: { color: '#fff', fontWeight: 900 },
+                itemStyle: { areaColor: '#a80e28', borderColor: '#ffe28a', borderWidth: 3 }
+              },
+              data: this.districtNames.map((name, index) => ({
+                name,
+                value: this.mockData[name].length,
+                itemStyle: { areaColor: this.districtPalette[index] }
+              }))
+            }]
+          });
+          this.chart.on('click', (params) => {
+            if (params && params.name && this.mockData[params.name]) this.openDistrict(params.name);
+          });
+          this.chartReady = true;
+          this.syncChartSelection();
+        },
+        syncChartSelection() {
+          if (!this.chart) return;
+          this.districtNames.forEach((name) => {
+            this.chart.dispatchAction({ type: 'unselect', seriesIndex: 0, name });
+          });
+          if (this.selectedDistrict) this.chart.dispatchAction({ type: 'select', seriesIndex: 0, name: this.selectedDistrict });
+        },
+        openDistrict(district) {
+          this.selectedDistrict = district;
+          this.selectedTeam = null;
+          this.$nextTick(() => this.syncChartSelection());
+        },
+        closeDistrict() {
+          this.selectedDistrict = null;
+          this.$nextTick(() => this.syncChartSelection());
+        },
+        openTeam(team) {
+          this.selectedTeam = team;
+        },
+        closeTeam() {
+          this.selectedTeam = null;
+        },
+        initPanzoom() {
+          if (this.panzoomReady && this.panzoom) return;
+          if (typeof window.Panzoom !== 'function' || !this.$refs.panzoomLayer) {
+            this.panzoomError = true;
+            return;
+          }
+          try {
+            this.panzoom = window.Panzoom(this.$refs.panzoomLayer, {
+              minScale: 1,
+              maxScale: 3,
+              step: 0.35,
+              cursor: 'grab',
+              overflow: 'hidden',
+              exclude: '.map-marker',
+              touchAction: 'none'
+            });
+            this.panzoomReady = true;
+            this.syncZoomState();
+            this.zoomObserver = new MutationObserver(() => this.syncZoomState());
+            this.zoomObserver.observe(this.$refs.panzoomLayer, { attributes: true, attributeFilter: ['style'] });
+          } catch (error) {
+            console.error('Panzoom 初始化失败：', error);
+            this.panzoomError = true;
+          }
+        },
+        syncZoomState() {
+          if (!this.panzoom || typeof this.panzoom.getScale !== 'function') return;
+          const scale = Number(this.panzoom.getScale()) || 1;
+          const nextPercent = Math.round(scale * 100);
+          const nextMarkerScale = 1 / scale;
+          if (nextPercent !== this.zoomPercent) this.zoomPercent = nextPercent;
+          if (nextMarkerScale !== this.markerScale) this.markerScale = nextMarkerScale;
+        },
+        zoomIn() {
+          if (!this.panzoom) return;
+          this.panzoom.zoom(Math.min(3, (this.zoomPercent + 35) / 100), { animate: true });
+        },
+        zoomOut() {
+          if (!this.panzoom) return;
+          this.panzoom.zoom(Math.max(1, (this.zoomPercent - 35) / 100), { animate: true });
+        },
+        resetMap() {
+          if (!this.panzoom) return;
+          this.panzoom.reset({ animate: true });
+          this.zoomPercent = 100;
+          this.markerScale = 1;
+        },
+        handleWheel(event) {
+          if (!this.panzoomReady || !this.panzoom) return;
+          this.panzoom.zoomWithWheel(event);
+        },
+        markerStyle(team) {
+          return { left: team.x, top: team.y, transform: `translate(-50%, -100%) scale(${this.markerScale})` };
+        },
+        handleResize() {
+          if (this.chart && typeof this.chart.resize === 'function') this.chart.resize();
+          if (this.panzoom && typeof this.panzoom.resize === 'function') this.panzoom.resize();
+        },
+        handleKeydown(event) {
+          if (event.key !== 'Escape') return;
+          if (this.selectedTeam) this.closeTeam();
+          else if (this.selectedDistrict) this.closeDistrict();
+        },
+        handleImageError(event) {
+          event.target.style.opacity = '0';
+        },
+        handleMapImageError() {
+          this.mapImageFailed = true;
+        },
+        showJoinToast() {
+          this.toast = '已记录你的参与意向，实际报名请联系属地党群服务中心。';
+          if (this.toastTimer) window.clearTimeout(this.toastTimer);
+          this.toastTimer = window.setTimeout(() => { this.toast = ''; }, 3200);
+        }
+      }
+    });
+
+    window.__mapApp = mapApp.mount('#app');
+  </script>
+
+  <script>
+    window.addEventListener('load', () => {
+      window.setTimeout(() => {
+        if (window.__mapAppReady) return;
+        const bootScreen = document.getElementById('boot-screen');
+        const bootTitle = document.getElementById('boot-title');
+        const bootMessage = document.getElementById('boot-message');
+        if (!bootScreen) return;
+        bootScreen.classList.add('is-error');
+        if (bootTitle) bootTitle.textContent = '地图资源加载失败';
+        if (bootMessage) bootMessage.textContent = '请确认网络连接正常后刷新页面，或将 CDN 资源下载到本地使用。';
+      }, 2200);
+    });
+  </script>
+</body>
+</html>

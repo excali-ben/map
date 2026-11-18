@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#c8102e" />
+  <meta name="description" content="通州区党建志愿服务地图 H5 交互原型" />
+  <title>通州区党建志愿服务地图</title>
+
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="preconnect" href="https://unpkg.com" />
+  <link rel="preconnect" href="https://picsum.photos" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            party: '#c8102e',
+            partyDeep: '#8f0a21',
+            gold: '#ffd700',
+            cream: '#f7f2e9'
+          },
+          fontFamily: {
+            sans: ['"Noto Sans SC"', '"Microsoft YaHei"', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    :root {
+      --party-red: #c8102e;
+      --party-deep: #8f0a21;
+      --party-dark: #650616;
+      --gold: #ffd700;
+      --gold-soft: #f1cb75;
+      --cream: #f7f2e9;
+      --paper: #fffdf9;
+      --ink: #2b2322;
+      --muted: #766965;
+      --shadow: 0 20px 55px rgba(53, 20, 17, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body,
+    #app {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      color: var(--ink);
+      font-family: "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+      background: var(--party-dark);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      overscroll-behavior: none;
+    }
+
+    [v-cloak] {
+      display: none !important;
+    }
+
+    button {
+      font: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:focus-visible {
+      outline: 3px solid rgba(255, 215, 0, 0.9);
+      outline-offset: 3px;
+    }
+
+    .map-app {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      background: #d9ccb9;
+      isolation: isolate;
+    }
+
+    .map-stage {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .map-viewport {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      touch-action: none;
+      cursor: grab;
+      background: #d8cbb8;
+    }
+
+    .map-viewport:active {
+      cursor: grabbing;
+    }
+
+    .map-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      transform-origin: 0 0;
+      will-change: transform;
+      touch-action: none;
+      user-select: none;
+      background:
+        radial-gradient(circle at 74% 26%, rgba(255, 215, 0, 0.2), transparent 30%),
+        linear-gradient(145deg, #e4d9c8, #cfc1ad);
+    }
+
+    .map-image {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-drag: none;
+      filter: saturate(0.58) sepia(0.18) contrast(0.94) brightness(1.06);
+    }
+
+    .map-wash {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(180deg, rgba(101, 6, 22, 0.05) 0%, transparent 28%, transparent 68%, rgba(78, 38, 27, 0.22) 100%),
+        radial-gradient(circle at 50% 45%, transparent 26%, rgba(99, 66, 47, 0.12) 100%);
+      mix-blend-mode: multiply;
+    }
+
+    .map-canvas::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.16;
+      background-image:
+        linear-gradient(rgba(94, 54, 39, 0.16) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(94, 54, 39, 0.12) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mix-blend-mode: multiply;
+    }
+
+    .map-vignette {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      box-shadow:
+        inset 0 0 100px rgba(90, 49, 31, 0.15),
+        inset 0 -140px 100px rgba(36, 20, 14, 0.18);
+    }
+
+    .map-header {
+      position: absolute;
+      top: calc(14px + env(safe-area-inset-top));
+      left: 14px;
+      right: 14px;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 76px;
+      padding: 12px 14px;
+      overflow: hidden;
+      color: #fff;
+      background:
+        linear-gradient(115deg, rgba(101, 6, 22, 0.98), rgba(200, 16, 46, 0.95) 65%, rgba(168, 24, 36, 0.94));
+      border: 1px solid rgba(255, 215, 0, 0.36);
+      border-radius: 20px;
+      box-shadow: 0 16px 40px rgba(61, 10, 18, 0.28);
+      backdrop-filter: blur(16px);
+    }
+
+    .map-header::before {
+      content: "";
+      position: absolute;
+      top: -42px;
+      right: 48px;
+      width: 140px;
+      height: 140px;
+      border: 1px solid rgba(255, 215, 0, 0.24);
+      border-radius: 50%;
+      box-shadow:
+        0 0 0 22px rgba(255, 215, 0, 0.035),
+        0 0 0 48px rgba(255, 215, 0, 0.025);
+    }
+
+    .map-header::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 34%;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--gold));
+    }
+
+    .brand-group {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      min-width: 0;
+      align-items: center;
+      gap: 11px;
+    }
+
+    .brand-emblem {
+      position: relative;
+      display: grid;
+      flex: 0 0 auto;
+      width: 48px;
+      height: 48px;
+      place-items: center;
+      color: var(--party-deep);
+      background: linear-gradient(145deg, #fff8d7, var(--gold) 72%, #e5b83c);
+      border: 2px solid rgba(255, 255, 255, 0.82);
+      border-radius: 16px 16px 16px 5px;
+      box-shadow: 0 7px 18px rgba(61, 0, 11, 0.28);
+      transform: rotate(-2deg);
+    }
+
+    .brand-emblem i {
+      font-size: 21px;
+      transform: rotate(2deg);
+    }
+
+    .brand-emblem .star {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      display: grid;
+      width: 19px;
+      height: 19px;
+      place-items: center;
+      color: var(--gold);
+      background: var(--party-deep);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 50%;
+      font-size: 8px;
+      box-shadow: 0 3px 8px rgba(45, 0, 6, 0.3);
+    }
+
+    .brand-copy {
+      min-width: 0;
+    }
+
+    .brand-kicker {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin: 0 0 3px;
+      color: rgba(255, 242, 197, 0.82);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
+
+    .brand-kicker::before {
+      content: "";
+      width: 15px;
+      height: 1px;
+      background: var(--gold-soft);
+    }
+
+    .brand-title {
+      margin: 0;
+      overflow: hidden;
+      color: #fff;
+      font-size: clamp(17px, 4.6vw, 23px);
+      font-weight: 800;
+      letter-spacing: 0.035em;
+      line-height: 1.25;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      text-shadow: 0 2px 10px rgba(55, 0, 8, 0.3);
+    }
+
+    .brand-subtitle {
+      margin: 3px 0 0;
+      color: rgba(255, 246, 222, 0.68);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+    }
+
+    .header-status {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex: 0 0 auto;
+      align-items: center;
+      gap: 7px;
+      margin-left: 9px;
+      padding: 7px 9px;
+      color: #fff7df;
+      background: rgba(75, 0, 12, 0.24);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .status-dot {
+      position: relative;
+      width: 7px;
+      height: 7px;
+      background: #ffe38a;
+      border-radius: 50%;
+      box-shadow: 0 0 0 4px rgba(255, 215, 0, 0.12);
+    }
+
+    .status-dot::after {
+      content: "";
+      position: absolute;
+      inset: -4px;
+      border: 1px solid rgba(255, 224, 132, 0.5);
+      border-radius: 50%;
+      animation: statusPulse 2.2s ease-out infinite;
+    }
+
+    .district-chip {
+      position: absolute;
+      top: calc(104px + env(safe-area-inset-top));
+      left: 16px;
+      z-index: 20;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 11px;
+      color: #5a4038;
+      background: rgba(255, 252, 244, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.82);
+      border-radius: 999px;
+      box-shadow: 0 8px 22px rgba(73, 42, 29, 0.12);
+      backdrop-filter: blur(12px);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      pointer-events: none;
+    }
+
+    .district-chip i {
+      color: var(--party-red);
+    }
+
+    .map-marker {
+      position: absolute;
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 48px;
+      padding: 0;
+      color: var(--party-red);
+      background: transparent;
+      border: 0;
+      cursor: pointer;
+      transform-origin: 50% 100%;
+      filter: drop-shadow(0 10px 12px rgba(74, 9, 19, 0.25));
+    }
+
+    .marker-pulse {
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      width: 40px;
+      height: 16px;
+      background: rgba(200, 16, 46, 0.24);
+      border: 1px solid rgba(200, 16, 46, 0.24);
+      border-radius: 50%;
+      transform: translateX(-50%);
+      animation: markerPulse 2.1s ease-out infinite;
+    }
+
+    .marker-pulse.second {
+      animation-delay: 1.05s;
+    }
+
+    .marker-pin {
+      position: relative;
+      display: grid;
+      width: 43px;
+      height: 43px;
+      place-items: center;
+      color: #fff;
+      background: linear-gradient(150deg, #e32243 0%, var(--party-red) 52%, #a90b24 100%);
+      border: 3px solid #fff;
+      border-radius: 50% 50% 50% 9px;
+      box-shadow:
+        0 8px 16px rgba(92, 7, 22, 0.32),
+        inset 0 1px 0 rgba(255, 255, 255, 0.34);
+      transform: rotate(-45deg);
+      transition: transform 180ms ease, box-shadow 180ms ease;
+    }
+
+    .marker-pin::after {
+      content: "";
+      position: absolute;
+      inset: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: inherit;
+    }
+
+    .marker-pin i {
+      font-size: 16px;
+      transform: rotate(45deg);
+    }
+
+    .map-marker:hover .marker-pin,
+    .map-marker:focus-visible .marker-pin,
+    .map-marker.is-active .marker-pin {
+      box-shadow:
+        0 10px 20px rgba(92, 7, 22, 0.38),
+        0 0 0 5px rgba(255, 215, 0, 0.48);
+      transform: rotate(-45deg) translate(2px, -2px) scale(1.08);
+    }
+
+    .marker-label {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      max-width: 150px;
+      padding: 6px 10px;
+      overflow: hidden;
+      color: #4b2c28;
+      background: rgba(255, 253, 248, 0.94);
+      border: 1px solid rgba(134, 56, 49, 0.14);
+      border-radius: 10px;
+      box-shadow: 0 7px 20px rgba(67, 32, 24, 0.14);
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.2;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      transform: translateX(-50%) translateY(4px);
+      opacity: 0;
+      transition: opacity 180ms ease, transform 180ms ease;
+      pointer-events: none;
+      backdrop-filter: blur(8px);
+    }
+
+    .marker-label::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      width: 7px;
+      height: 7px;
+      background: rgba(255, 253, 248, 0.94);
+      border-right: 1px solid rgba(134, 56, 49, 0.12);
+      border-bottom: 1px solid rgba(134, 56, 49, 0.12);
+      transform: translate(-50%, -4px) rotate(45deg);
+    }
+
+    .map-marker:hover .marker-label,
+    .map-marker:focus-visible .marker-label,
+    .map-marker.is-active .marker-label {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .zoom-controls {
+      position: absolute;
+      right: 16px;
+      bottom: calc(92px + env(safe-area-inset-bottom));
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding: 6px;
+      background: rgba(255, 252, 245, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.82);
+      border-radius: 16px;
+      box-shadow: 0 14px 34px rgba(65, 35, 24, 0.17);
+      backdrop-filter: blur(14px);
+    }
+
+    .zoom-button {
+      display: grid;
+      width: 40px;
+      height: 40px;
+      place-items: center;
+      color: #6b443c;
+      background: transparent;
+      border: 0;
+      border-radius: 11px;
+      cursor: pointer;
+      transition: color 160ms ease, background 160ms ease, transform 160ms ease;
+    }
+
+    .zoom-button:hover:not(:disabled) {
+      color: var(--party-red);
+      background: rgba(200, 16, 46, 0.08);
+    }
+
+    .zoom-button:active:not(:disabled) {
+      transform: scale(0.94);
+    }
+
+    .zoom-button:disabled {
+      cursor: default;
+      opacity: 0.34;
+    }
+
+    .zoom-divider {
+      height: 1px;
+      margin: 0 7px;
+      background: rgba(102, 62, 53, 0.12);
+    }
+
+    .zoom-level {
+      padding: 2px 0 1px;
+      color: #8d756d;
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .map-caption {
+      position: absolute;
+      right: 16px;
+      bottom: calc(18px + env(safe-area-inset-bottom));
+      left: 16px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      max-width: 480px;
+      padding: 12px 14px;
+      color: #5c4038;
+      background: rgba(255, 252, 245, 0.91);
+      border: 1px solid rgba(255, 255, 255, 0.84);
+      border-radius: 16px;
+      box-shadow: 0 14px 34px rgba(65, 35, 24, 0.16);
+      backdrop-filter: blur(14px);
+    }
+
+    .caption-icon {
+      display: grid;
+      flex: 0 0 auto;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      color: var(--party-red);
+      background: rgba(200, 16, 46, 0.08);
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    .caption-copy {
+      min-width: 0;
+    }
+
+    .caption-copy strong {
+      display: block;
+      color: #3d2925;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.4;
+    }
+
+    .caption-copy span {
+      display: block;
+      margin-top: 2px;
+      color: #8b746d;
+      font-size: 9px;
+      line-height: 1.4;
+      white-space: nowrap;
+    }
+
+    .caption-count {
+      display: flex;
+      flex: 0 0 auto;
+      align-items: baseline;
+      gap: 3px;
+      color: var(--party-red);
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .caption-count strong {
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .caption-count span {
+      color: #927970;
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .component-warning {
+      position: absolute;
+      top: calc(143px + env(safe-area-inset-top));
+      left: 16px;
+      right: 16px;
+      z-index: 21;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      color: #6d2630;
+      background: rgba(255, 244, 227, 0.95);
+      border: 1px solid rgba(200, 16, 46, 0.18);
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(70, 30, 20, 0.12);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .detail-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0;
+      background: rgba(44, 24, 20, 0.43);
+      backdrop-filter: blur(5px);
+    }
+
+    .detail-panel {
+      position: relative;
+      width: min(100%, 520px);
+      max-height: 82vh;
+      max-height: 82dvh;
+      overflow: auto;
+      padding-bottom: env(safe-area-inset-bottom);
+      background: var(--paper);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      border-radius: 25px 25px 0 0;
+      box-shadow: 0 -18px 70px rgba(44, 12, 17, 0.26);
+      overscroll-behavior: contain;
+    }
+
+    .sheet-grip {
+      width: 38px;
+      height: 4px;
+      margin: 9px auto 0;
+      background: #ddd1ca;
+      border-radius: 999px;
+    }
+
+    .sheet-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 17px 8px;
+    }
+
+    .sheet-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--party-red);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+    }
+
+    .sheet-eyebrow::before {
+      content: "";
+      width: 18px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--party-red), var(--gold-soft));
+    }
+
+    .sheet-close {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      color: #79635d;
+      background: #f4eee8;
+      border: 0;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .detail-hero {
+      position: relative;
+      min-height: 130px;
+      margin: 0 14px;
+      padding: 21px 18px;
+      overflow: hidden;
+      color: #fff;
+      background:
+        radial-gradient(circle at 86% 15%, rgba(255, 215, 0, 0.3), transparent 27%),
+        linear-gradient(125deg, var(--party-deep), var(--party-red));
+      border-radius: 18px;
+    }
+
+    .detail-hero::before {
+      content: "志愿";
+      position: absolute;
+      right: -8px;
+      bottom: -28px;
+      color: rgba(255, 255, 255, 0.065);
+      font-size: 104px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -0.12em;
+    }
+
+    .detail-hero::after {
+      content: "";
+      position: absolute;
+      top: -36px;
+      right: 42px;
+      width: 120px;
+      height: 120px;
+      border: 1px solid rgba(255, 215, 0, 0.28);
+      border-radius: 50%;
+      box-shadow: 0 0 0 20px rgba(255, 215, 0, 0.045), 0 0 0 42px rgba(255, 215, 0, 0.028);
+    }
+
+    .hero-icon {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      width: 47px;
+      height: 47px;
+      place-items: center;
+      margin-bottom: 14px;
+      color: var(--party-deep);
+      background: linear-gradient(145deg, #fff8d7, var(--gold));
+      border: 2px solid rgba(255, 255, 255, 0.72);
+      border-radius: 14px 14px 14px 5px;
+      box-shadow: 0 8px 18px rgba(55, 0, 8, 0.24);
+    }
+
+    .hero-icon i {
+      font-size: 19px;
+    }
+
+    .hero-kicker {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 5px;
+      color: rgba(255, 244, 210, 0.74);
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+    }
+
+    .hero-kicker i {
+      color: var(--gold-soft);
+      font-size: 8px;
+    }
+
+    .detail-title {
+      position: relative;
+      z-index: 1;
+      max-width: 90%;
+      margin: 0;
+      font-size: clamp(20px, 5.5vw, 26px);
+      font-weight: 900;
+      line-height: 1.32;
+      letter-spacing: 0.02em;
+    }
+
+    .detail-number {
+      position: absolute;
+      top: 17px;
+      right: 18px;
+      z-index: 1;
+      color: rgba(255, 255, 255, 0.16);
+      font-size: 25px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .detail-body {
+      padding: 18px 19px 20px;
+    }
+
+    .detail-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-bottom: 16px;
+    }
+
+    .meta-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 9px;
+      color: #81554d;
+      background: #f7f0e9;
+      border: 1px solid rgba(133, 72, 59, 0.09);
+      border-radius: 999px;
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .meta-chip i {
+      color: var(--party-red);
+      font-size: 9px;
+    }
+
+    .detail-section-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      color: #4c342f;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .detail-section-label::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(109, 65, 55, 0.13), transparent);
+    }
+
+    .detail-intro {
+      margin: 0;
+      color: #76615b;
+      font-size: 13px;
+      line-height: 1.85;
+    }
+
+    .detail-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 19px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(102, 65, 56, 0.1);
+    }
+
+    .party-signature {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: #9b827a;
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .party-signature i {
+      color: var(--party-red);
+    }
+
+    .detail-close-button {
+      display: inline-flex;
+      min-height: 42px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 18px;
+      color: #fff;
+      background: linear-gradient(120deg, var(--party-deep), var(--party-red));
+      border: 0;
+      border-radius: 12px;
+      box-shadow: 0 9px 20px rgba(151, 14, 38, 0.22);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .sheet-fade-enter-active,
+    .sheet-fade-leave-active {
+      transition: opacity 220ms ease;
+    }
+
+    .sheet-fade-enter-active .detail-panel,
+    .sheet-fade-leave-active .detail-panel {
+      transition: transform 280ms cubic-bezier(0.22, 0.8, 0.32, 1);
+    }
+
+    .sheet-fade-enter-from,
+    .sheet-fade-leave-to {
+      opacity: 0;
+    }
+
+    .sheet-fade-enter-from .detail-panel,
+    .sheet-fade-leave-to .detail-panel {
+      transform: translateY(100%);
+    }
+
+    .boot-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      color: #4a2b27;
+      background:
+        radial-gradient(circle at 50% 35%, rgba(255, 215, 0, 0.18), transparent 24rem),
+        linear-gradient(145deg, #fffaf1, #f2e8dc);
+      transition: opacity 360ms ease, visibility 360ms ease;
+    }
+
+    .boot-screen.is-hidden {
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .boot-card {
+      display: flex;
+      max-width: 310px;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .boot-emblem {
+      display: grid;
+      width: 66px;
+      height: 66px;
+      place-items: center;
+      color: var(--party-deep);
+      background: linear-gradient(145deg, #fff8d4, var(--gold));
+      border: 3px solid #fff;
+      border-radius: 21px 21px 21px 7px;
+      box-shadow: 0 14px 30px rgba(133, 22, 38, 0.2);
+      font-size: 27px;
+    }
+
+    .boot-card h1 {
+      margin: 17px 0 5px;
+      font-size: 19px;
+      font-weight: 900;
+    }
+
+    .boot-card p {
+      margin: 0;
+      color: #8c746c;
+      font-size: 11px;
+      line-height: 1.7;
+    }
+
+    .boot-spinner {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 18px;
+    }
+
+    .boot-spinner span {
+      width: 6px;
+      height: 6px;
+      background: var(--party-red);
+      border-radius: 50%;
+      animation: bootBounce 1.1s ease-in-out infinite;
+    }
+
+    .boot-spinner span:nth-child(2) {
+      animation-delay: 140ms;
+    }
+
+    .boot-spinner span:nth-child(3) {
+      animation-delay: 280ms;
+    }
+
+    .boot-screen.is-error .boot-spinner {
+      display: none;
+    }
+
+    .boot-screen.is-error .boot-emblem {
+      color: #8b6d64;
+      filter: grayscale(0.7);
+    }
+
+    @keyframes markerPulse {
+      0% { transform: translateX(-50%) scale(0.65); opacity: 0.72; }
+      75%, 100% { transform: translateX(-50%) scale(1.75); opacity: 0; }
+    }
+
+    @keyframes statusPulse {
+      0% { transform: scale(0.7); opacity: 0.7; }
+      75%, 100% { transform: scale(1.5); opacity: 0; }
+    }
+
+    @keyframes bootBounce {
+      0%, 60%, 100% { opacity: 0.35; transform: translateY(0); }
+      30% { opacity: 1; transform: translateY(-5px); }
+    }
+
+    @media (min-width: 720px) {
+      .map-header {
+        right: auto;
+        width: 460px;
+        padding: 13px 16px;
+      }
+
+      .district-chip {
+        top: calc(107px + env(safe-area-inset-top));
+      }
+
+      .map-caption {
+        right: auto;
+        width: 372px;
+      }
+
+      .zoom-controls {
+        right: 24px;
+        bottom: 24px;
+      }
+
+      .detail-backdrop {
+        align-items: center;
+        padding: 24px;
+      }
+
+      .detail-panel {
+        border-radius: 25px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .header-status {
+        width: 34px;
+        height: 34px;
+        justify-content: center;
+        padding: 0;
+        border-radius: 12px;
+      }
+
+      .header-status .status-text {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+      }
+
+      .brand-subtitle {
+        display: none;
+      }
+
+      .brand-kicker {
+        font-size: 8px;
+      }
+
+      .marker-label {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+        font-size: 10px;
+      }
+
+      .caption-copy span {
+        max-width: 190px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+
+    @media (max-width: 370px) {
+      .brand-emblem {
+        width: 43px;
+        height: 43px;
+      }
+
+      .brand-title {
+        font-size: 16px;
+      }
+
+      .map-caption {
+        right: 70px;
+        padding: 10px 11px;
+      }
+
+      .caption-icon,
+      .caption-count {
+        display: none;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="boot-screen" class="boot-screen" aria-live="polite">
+    <div class="boot-card">
+      <div class="boot-emblem"><i class="fa-solid fa-hand-holding-heart"></i></div>
+      <h1 id="boot-title">通州区党建志愿服务地图</h1>
+      <p id="boot-message">正在加载地图资源，请稍候…</p>
+      <div class="boot-spinner" aria-hidden="true"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+
+  <div id="app" v-cloak>
+    <main class="map-app">
+      <header class="map-header" aria-label="页面标题">
+        <div class="brand-group">
+          <div class="brand-emblem" aria-hidden="true">
+            <i class="fa-solid fa-hand-holding-heart"></i>
+            <span class="star"><i class="fa-solid fa-star"></i></span>
+          </div>
+          <div class="brand-copy">
+            <p class="brand-kicker">TONGZHOU VOLUNTEER</p>
+            <h1 class="brand-title">通州区党建志愿服务地图</h1>
+            <p class="brand-subtitle">党建领航 · 志愿同行 · 共建美好副中心</p>
+          </div>
+        </div>
+        <div class="header-status" :title="`当前展示 ${mockData.length} 个志愿服务点位`">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span class="status-text">{{ mockData.length }} 个服务点位</span>
+        </div>
+      </header>
+
+      <section class="map-stage" aria-label="通州区志愿服务静态地图">
+        <div ref="mapViewport" class="map-viewport" @wheel.prevent="handleWheel">
+          <!-- 替换真实底图时，只需修改 data 中的 mapImage 地址。 -->
+          <div ref="panzoomLayer" class="map-canvas">
+            <img
+              class="map-image"
+              :src="mapImageSrc"
+              alt="通州区地图占位底图"
+              draggable="false"
+              @error="handleMapImageError"
+            />
+            <div class="map-wash" aria-hidden="true"></div>
+
+            <button
+              v-for="team in mockData"
+              :key="team.id"
+              type="button"
+              class="map-marker"
+              :class="{ 'is-active': selectedTeam && selectedTeam.id === team.id }"
+              :style="markerStyle(team)"
+              :aria-label="`查看${team.name}详情`"
+              @pointerdown.stop
+              @mousedown.stop
+              @touchstart.stop
+              @click.stop="openTeam(team)"
+            >
+              <span class="marker-pulse" aria-hidden="true"></span>
+              <span class="marker-pulse second" aria-hidden="true"></span>
+              <span class="marker-pin" aria-hidden="true">
+                <i class="fa-solid fa-location-dot"></i>
+              </span>
+              <span class="marker-label">{{ team.shortName }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="map-vignette" aria-hidden="true"></div>
+
+        <div class="district-chip">
+          <i class="fa-solid fa-compass" aria-hidden="true"></i>
+          <span>北京城市副中心 · 通州区</span>
+        </div>
+
+        <div v-if="panzoomError" class="component-warning" role="alert">
+          <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+          <span>缩放组件加载失败，请检查网络后刷新页面。</span>
+        </div>
+
+        <div class="zoom-controls" aria-label="地图缩放控制">
+          <button
+            type="button"
+            class="zoom-button"
+            aria-label="放大地图"
+            :disabled="!panzoomReady || zoomPercent >= 300"
+            @click="zoomIn"
+          >
+            <i class="fa-solid fa-plus" aria-hidden="true"></i>
+          </button>
+          <div class="zoom-level">{{ zoomPercent }}%</div>
+          <button
+            type="button"
+            class="zoom-button"
+            aria-label="缩小地图"
+            :disabled="!panzoomReady || zoomPercent <= 100"
+            @click="zoomOut"
+          >
+            <i class="fa-solid fa-minus" aria-hidden="true"></i>
+          </button>
+          <div class="zoom-divider" aria-hidden="true"></div>
+          <button
+            type="button"
+            class="zoom-button"
+            aria-label="复位地图"
+            :disabled="!panzoomReady"
+            @click="resetMap"
+          >
+            <i class="fa-solid fa-expand" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div class="map-caption">
+          <div class="caption-icon"><i class="fa-solid fa-hand-pointer" aria-hidden="true"></i></div>
+          <div class="caption-copy">
+            <strong>点击红色坐标查看队伍</strong>
+            <span>{{ mapHint }}</span>
+          </div>
+          <div class="caption-count" aria-label="服务点位数量">
+            <strong>{{ mockData.length }}</strong>
+            <span>支队伍</span>
+          </div>
+        </div>
+      </section>
+
+      <transition name="sheet-fade">
+        <div v-if="selectedTeam" class="detail-backdrop" @click="closeTeam">
+          <section
+            ref="detailPanel"
+            class="detail-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="team-detail-title"
+            tabindex="-1"
+            @click.stop
+          >
+            <div class="sheet-grip" aria-hidden="true"></div>
+            <div class="sheet-toolbar">
+              <span class="sheet-eyebrow">志愿服务队伍</span>
+              <button type="button" class="sheet-close" aria-label="关闭队伍详情" @click="closeTeam">
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+              </button>
+            </div>
+
+            <div class="detail-hero">
+              <span class="detail-number">{{ String(selectedTeam.id).padStart(2, '0') }}</span>
+              <div class="hero-icon"><i class="fa-solid fa-users-line" aria-hidden="true"></i></div>
+              <div class="hero-kicker"><i class="fa-solid fa-star" aria-hidden="true"></i> 党员先锋 · 红色志愿力量</div>
+              <h2 id="team-detail-title" class="detail-title">{{ selectedTeam.name }}</h2>
+            </div>
+
+            <div class="detail-body">
+              <div class="detail-meta">
+                <span class="meta-chip"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> {{ selectedTeam.shortName }}</span>
+                <span class="meta-chip"><i class="fa-solid fa-heart" aria-hidden="true"></i> 志愿服务</span>
+                <span class="meta-chip"><i class="fa-solid fa-flag" aria-hidden="true"></i> 党建领航</span>
+              </div>
+
+              <div class="detail-section-label">队伍介绍</div>
+              <p class="detail-intro">{{ selectedTeam.intro }}</p>
+
+              <div class="detail-footer">
+                <span class="party-signature"><i class="fa-solid fa-seedling" aria-hidden="true"></i> 副中心先锋 · 与爱同行</span>
+                <button ref="detailCloseButton" type="button" class="detail-close-button" @click="closeTeam">
+                  返回地图
+                  <i class="fa-solid fa-arrow-right-long" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </transition>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js"></script>
+  <script src="https://unpkg.com/@panzoom/panzoom@4.5.0/dist/panzoom.min.js"></script>
+  <script>
+    (() => {
+      const { createApp, nextTick } = Vue;
+
+      // 本地示意图仅在在线占位图加载失败时启用，不依赖任何地图 API。
+      const fallbackMapSvg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="2000" height="2000" viewBox="0 0 2000 2000">
+          <defs>
+            <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#eee4d2"/>
+              <stop offset="0.52" stop-color="#e4d7c2"/>
+              <stop offset="1" stop-color="#d8c8b1"/>
+            </linearGradient>
+            <linearGradient id="river" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#a9c8c8"/>
+              <stop offset="1" stop-color="#87afb4"/>
+            </linearGradient>
+            <pattern id="grid" width="120" height="120" patternUnits="userSpaceOnUse">
+              <path d="M120 0H0V120" fill="none" stroke="#8b745f" stroke-opacity=".12" stroke-width="2"/>
+            </pattern>
+            <filter id="soft"><feGaussianBlur stdDeviation="12"/></filter>
+          </defs>
+          <rect width="2000" height="2000" fill="url(#paper)"/>
+          <rect width="2000" height="2000" fill="url(#grid)"/>
+          <g fill="none" stroke="#ab947c" stroke-opacity=".45" stroke-width="5">
+            <path d="M-40 490C280 410 375 610 674 550S1178 300 1447 391s391 258 640 195"/>
+            <path d="M143 2000c70-279 197-388 468-436s427-185 515-407 232-399 527-448 323-213 390-474"/>
+            <path d="M0 1194c298-97 480-63 744 71s508 114 722-13 330-125 542-83"/>
+            <path d="M628 0c18 228 102 326 292 450s267 330 245 536-2 344 144 494 259 321 279 520"/>
+          </g>
+          <path d="M-80 1180c310-108 462-54 690 83s464 157 671 44 353-201 758-74v246c-334-94-513-11-736 113s-440 99-708-42S322 1392-80 1452Z" fill="url(#river)" opacity=".85"/>
+          <path d="M-80 1180c310-108 462-54 690 83s464 157 671 44 353-201 758-74" fill="none" stroke="#f4fbfa" stroke-opacity=".5" stroke-width="13"/>
+          <g fill="#c3b39d" opacity=".26">
+            <circle cx="338" cy="766" r="168"/>
+            <circle cx="1597" cy="714" r="205"/>
+            <circle cx="1518" cy="1542" r="248"/>
+            <circle cx="530" cy="1580" r="190"/>
+          </g>
+          <g fill="#805f4d" font-family="Microsoft YaHei, sans-serif">
+            <text x="1000" y="920" text-anchor="middle" font-size="142" font-weight="700" opacity=".14" letter-spacing="34">通 州</text>
+            <text x="1000" y="1005" text-anchor="middle" font-size="30" opacity=".28" letter-spacing="12">TONGZHOU · BEIJING</text>
+          </g>
+        </svg>
+      `;
+
+      createApp({
+        data() {
+          return {
+            mapImage: 'https://picsum.photos/2000/2000',
+            fallbackMap: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(fallbackMapSvg)}`,
+            imageLoadFailed: false,
+            panzoom: null,
+            zoomObserver: null,
+            panzoomReady: false,
+            panzoomError: false,
+            zoomPercent: 100,
+            markerScale: 1,
+            selectedTeam: null,
+            mapHint: '双指缩放 · 拖拽浏览 · 单指移动',
+            mockData: [
+              {
+                id: 1,
+                name: '五街镇青年志愿先锋队',
+                shortName: '五街镇',
+                x: '30%',
+                y: '40%',
+                intro: '这是一支充满活力的青年队伍，扎根五街镇社区一线，围绕邻里守望、助老扶幼、文明引导等主题开展常态化志愿服务，用青春行动传递副中心的温度。'
+              },
+              {
+                id: 2,
+                name: '中仓便民服务队',
+                shortName: '中仓街道',
+                x: '50%',
+                y: '60%',
+                intro: '提供磨刀、理发、小家电维修等便民服务，队员定期走进社区和养老驿站，把贴心服务送到居民家门口，让志愿红成为社区里温暖的日常。'
+              },
+              {
+                id: 3,
+                name: '玉桥环保卫士',
+                shortName: '玉桥街道',
+                x: '70%',
+                y: '30%',
+                intro: '致力于社区垃圾分类宣传、环境清洁和绿色生活倡导，通过趣味科普与志愿实践活动，带动更多居民共同守护整洁、宜居的美好家园。'
+              }
+            ]
+          };
+        },
+        computed: {
+          mapImageSrc() {
+            return this.imageLoadFailed ? this.fallbackMap : this.mapImage;
+          }
+        },
+        mounted() {
+          window.__mapAppReady = true;
+          nextTick(() => {
+            const bootScreen = document.getElementById('boot-screen');
+            if (bootScreen) bootScreen.classList.add('is-hidden');
+            this.initPanzoom();
+          });
+          window.addEventListener('keydown', this.handleKeydown);
+        },
+        beforeUnmount() {
+          window.removeEventListener('keydown', this.handleKeydown);
+          if (this.panzoom) {
+            if (typeof this.panzoom.destroy === 'function') this.panzoom.destroy();
+          }
+          if (this.zoomObserver) this.zoomObserver.disconnect();
+        },
+        methods: {
+          initPanzoom() {
+            if (typeof window.Panzoom !== 'function' || !this.$refs.panzoomLayer) {
+              this.panzoomError = true;
+              this.mapHint = '底图可查看，缩放组件暂不可用';
+              return;
+            }
+
+            try {
+              this.panzoom = window.Panzoom(this.$refs.panzoomLayer, {
+                minScale: 1,
+                maxScale: 3,
+                step: 0.35,
+                cursor: 'grab',
+                overflow: 'hidden',
+                exclude: '.map-marker',
+                touchAction: 'none'
+              });
+
+              this.panzoomReady = true;
+              this.syncZoomState();
+
+              // Panzoom 4.5 通过 style.transform 更新视图，监听样式即可同步缩放状态。
+              this.zoomObserver = new MutationObserver(() => this.syncZoomState());
+              this.zoomObserver.observe(this.$refs.panzoomLayer, {
+                attributes: true,
+                attributeFilter: ['style']
+              });
+            } catch (error) {
+              console.error('Panzoom 初始化失败：', error);
+              this.panzoomError = true;
+              this.mapHint = '底图可查看，缩放组件暂不可用';
+            }
+          },
+          syncZoomState() {
+            if (!this.panzoom || typeof this.panzoom.getScale !== 'function') return;
+            const scale = Number(this.panzoom.getScale()) || 1;
+            const nextPercent = Math.round(scale * 100);
+            const nextMarkerScale = 1 / scale;
+            if (nextPercent !== this.zoomPercent) this.zoomPercent = nextPercent;
+            if (nextMarkerScale !== this.markerScale) this.markerScale = nextMarkerScale;
+          },
+          zoomIn() {
+            if (!this.panzoom) return;
+            const nextScale = Math.min(3, (this.zoomPercent + 35) / 100);
+            this.panzoom.zoom(nextScale, { animate: true });
+          },
+          handleWheel(event) {
+            if (!this.panzoomReady || !this.panzoom) return;
+            this.panzoom.zoomWithWheel(event);
+          },
+          zoomOut() {
+            if (!this.panzoom) return;
+            const nextScale = Math.max(1, (this.zoomPercent - 35) / 100);
+            this.panzoom.zoom(nextScale, { animate: true });
+          },
+          resetMap() {
+            if (!this.panzoom) return;
+            this.panzoom.reset({ animate: true });
+            this.zoomPercent = 100;
+            this.markerScale = 1;
+          },
+          markerStyle(team) {
+            return {
+              left: team.x,
+              top: team.y,
+              transform: `translate(-50%, -100%) scale(${this.markerScale})`
+            };
+          },
+          openTeam(team) {
+            this.selectedTeam = team;
+            nextTick(() => {
+              if (this.$refs.detailPanel) this.$refs.detailPanel.focus({ preventScroll: true });
+            });
+          },
+          closeTeam() {
+            const activeId = this.selectedTeam && this.selectedTeam.id;
+            this.selectedTeam = null;
+            nextTick(() => {
+              const marker = this.$el.querySelector(`.map-marker[aria-label="查看${this.mockData.find((item) => item.id === activeId)?.name || ''}详情"]`);
+              if (marker) marker.focus({ preventScroll: true });
+            });
+          },
+          handleKeydown(event) {
+            if (event.key === 'Escape' && this.selectedTeam) this.closeTeam();
+          },
+          handleMapImageError() {
+            if (this.imageLoadFailed) return;
+            this.imageLoadFailed = true;
+            this.mapHint = '在线底图不可用 · 已切换本地示意图';
+          }
+        }
+      }).mount('#app');
+    })();
+  </script>
+
+  <script>
+    window.addEventListener('load', () => {
+      window.setTimeout(() => {
+        if (window.__mapAppReady) return;
+        const bootScreen = document.getElementById('boot-screen');
+        const bootTitle = document.getElementById('boot-title');
+        const bootMessage = document.getElementById('boot-message');
+        if (!bootScreen) return;
+        bootScreen.classList.add('is-error');
+        if (bootTitle) bootTitle.textContent = '地图资源加载失败';
+        if (bootMessage) bootMessage.textContent = '请确认网络连接正常后刷新页面，或将 CDN 资源下载到本地使用。';
+      }, 1800);
+    });
+  </script>
+</body>
+</html>
